@@ -50,12 +50,12 @@ export const registerDrawHandlers = (socket: ExtendedSocket): void => {
                 });
                 console.log(`✏️ Stroke saved with ${payload.points.length} points`);
             } else if (payload.tool === 'eraser' && payload.points.length > 0) {
-                // Save erase as ONE operation
+                // Save erase as ONE operation - use width * 3 to match real-time behavior
                 await drawService.saveOperation(socket.roomCode, socket.sessionId, 'erase', {
                     points: payload.points,
-                    size: payload.width,
+                    size: payload.width * 3,
                 });
-                console.log(`🧽 Erase saved with ${payload.points.length} points`);
+                console.log(`🧽 Erase saved with ${payload.points.length} points, size=${payload.width * 3}`);
             }
         } catch (error) {
             console.error('❌ Error saving stroke:', error);

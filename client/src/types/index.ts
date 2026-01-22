@@ -64,6 +64,7 @@ export interface RoomMember {
     joinedAt: string;
     lastSeenAt: string;
     isKicked: boolean;
+    isOnline: boolean;
 }
 
 // Drawing types

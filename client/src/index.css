@@ -6,7 +6,7 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  
+
   color-scheme: light dark;
   color: #213547;
   background-color: #ffffff;
@@ -61,8 +61,15 @@ body {
 
 /* Animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .float-animation {
@@ -80,4 +87,148 @@ body {
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Animated gradient backgrounds */
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(-45deg,
+      #93c5fd,
+      #f9a8d4,
+      #86efac,
+      #fde047,
+      #fca5a5,
+      #d8b4fe,
+      #a5b4fc,
+      #c4b5fd);
+  background-size: 400% 400%;
+  animation: gradient-flow 15s ease infinite;
+}
+
+.animated-gradient-fast {
+  background: linear-gradient(-45deg,
+      #93c5fd,
+      #f9a8d4,
+      #86efac,
+      #fde047,
+      #fca5a5,
+      #d8b4fe,
+      #a5b4fc,
+      #c4b5fd);
+  background-size: 400% 400%;
+  animation: gradient-flow 8s ease infinite;
+}
+
+/* Room form styles */
+.room-form {
+  @apply w-[340px] p-6 rounded-lg border-2 border-gray-300 bg-gray-50;
+  box-shadow: 4px 4px 0 #9ca3af;
+}
+
+.room-form-tabs {
+  @apply flex mb-5 rounded-md border-2 border-gray-300 overflow-hidden;
+  box-shadow: 3px 3px 0 #9ca3af;
+}
+
+.room-form-tab {
+  @apply flex-1 py-3 px-4 font-bold text-sm transition-all duration-300;
+  @apply border-none cursor-pointer;
+}
+
+.room-form-tab-active {
+  @apply text-white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.room-form-tab-inactive {
+  @apply bg-white text-gray-700 hover:bg-gray-100;
+}
+
+.room-form-title {
+  @apply text-xl font-black text-center text-gray-800 mb-4;
+}
+
+.room-form-fields {
+  @apply flex flex-col gap-4;
+}
+
+.room-form-input {
+  @apply w-full h-11 px-4 rounded-md border-2 border-gray-300 bg-white;
+  @apply text-sm font-semibold text-gray-800 outline-none;
+  @apply transition-all duration-300;
+  box-shadow: 4px 4px 0 #9ca3af;
+}
+
+.room-form-input:focus {
+  @apply border-transparent;
+}
+
+.room-form-input-wrapper {
+  @apply relative;
+}
+
+.room-form-input-glow {
+  @apply absolute inset-0 rounded-md opacity-0 transition-opacity duration-300;
+  transform: translate(4px, 4px);
+  z-index: 0;
+}
+
+.room-form-input-wrapper:focus-within .room-form-input-glow {
+  @apply opacity-100;
+}
+
+.room-form-input-wrapper:focus-within .room-form-input {
+  box-shadow: none;
+}
+
+.room-form-toggle-container {
+  @apply flex items-center justify-center gap-3 text-sm font-semibold;
+}
+
+.room-form-toggle-btn {
+  @apply relative w-12 h-6 rounded-md border-2 border-gray-300 cursor-pointer p-0;
+  @apply transition-all duration-300;
+  box-shadow: 3px 3px 0 #9ca3af;
+}
+
+.room-form-toggle-knob {
+  @apply absolute top-0.5 w-4 h-4 rounded-sm transition-all duration-300;
+}
+
+.room-form-btn {
+  @apply w-full h-11 rounded-md border-2 border-gray-300;
+  @apply text-base font-bold text-white cursor-pointer;
+  @apply transition-all duration-150 mt-1;
+  box-shadow: 4px 4px 0 #9ca3af;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.room-form-btn:hover {
+  filter: brightness(1.05);
+}
+
+.room-form-btn:active {
+  box-shadow: 0 0 0 #9ca3af;
+  transform: translate(4px, 4px);
+}
+
+.room-form-btn:disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+.room-form-error {
+  @apply p-3 rounded-md border-2 border-red-300 bg-red-50 text-red-600 text-sm font-semibold text-center;
 }

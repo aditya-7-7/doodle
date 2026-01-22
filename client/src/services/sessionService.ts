@@ -102,7 +102,9 @@ class SessionService {
 
     // Clear all session data
     public clearSession(): void {
-        localStorage.removeItem(SESSION_ID_KEY);
+        // Remove sessionId from sessionStorage (per-tab)
+        sessionStorage.removeItem(SESSION_ID_KEY);
+        // Remove other data from localStorage
         localStorage.removeItem(DISPLAY_NAME_KEY);
         localStorage.removeItem(USER_ID_KEY);
         localStorage.removeItem(RECENT_ROOMS_KEY);

@@ -88,10 +88,24 @@ export default function RoomPage() {
     useEffect(() => {
         initialize();
 
-        // Get displayName from store or directly from localStorage (for page refresh)
+        // Check if this SPECIFIC TAB has already joined THIS room
+        // Use sessionStorage (per-tab) + roomCode to track
+        const joinedKey = `joined_room_${roomCode}`;
+        const hasJoinedThisRoom = sessionStorage.getItem(joinedKey);
+
+        // CRITICAL: If this tab hasn't joined this room yet, show the form
+        // This prevents using localStorage displayName from other tabs/sessions
+        if (!hasJoinedThisRoom) {
+            // New tab opening shared link - must show join form
+            setShowJoinForm(true);
+            return;
+        }
+
+        // This tab has previously joined - get the name from store or localStorage
         const storedName = displayName || sessionService.getDisplayName();
+
         if (!storedName) {
-            // No display name - show join form for shared links
+            // Edge case: flag exists but no name - show form
             setShowJoinForm(true);
             return;
         }
@@ -99,12 +113,16 @@ export default function RoomPage() {
         // Clear any stale cursors from previous sessions
         clearRemoteCursors();
 
+        // Get stored password for private room reconnection
+        const storedPassword = sessionStorage.getItem(`room_password_${roomCode}`);
+
         const socket = socketService.connect();
 
         socket.on('connect', () => setIsConnected(true));
         socket.on('disconnect', () => setIsConnected(false));
 
         socket.on(SocketEvents.ROOM_JOINED, (data: any) => {
+            console.log(`📥 ROOM_JOINED received: snapshot=${!!data.snapshot}, operations=${data.operations?.length || 0}`);
             setRoom(data.room);
             setMembers(data.members);
 
@@ -114,16 +132,23 @@ export default function RoomPage() {
                 setIsAdmin(me.isAdmin);
             }
 
+            // Clear canvas before loading state
             canvasService.clear();
+            console.log(`🧹 Canvas cleared, preparing to load state...`);
 
             if (data.snapshot && canvasService.getCanvas()) {
+                console.log(`📸 Loading snapshot, then replaying ${data.operations?.length || 0} ops`);
                 canvasService.loadImage(data.snapshot).then(() => {
                     if (data.operations) {
+                        console.log(`▶️ Replaying ${data.operations.length} operations after snapshot`);
                         data.operations.forEach((op: any) => replayOperation(op));
                     }
                 });
-            } else if (data.operations) {
+            } else if (data.operations && data.operations.length > 0) {
+                console.log(`▶️ No snapshot - replaying ${data.operations.length} operations from scratch`);
                 data.operations.forEach((op: any) => replayOperation(op));
+            } else {
+                console.log(`📭 No snapshot or operations - empty canvas`);
             }
         });
 
@@ -170,8 +195,17 @@ export default function RoomPage() {
             }
         });
 
+        // Handle history sync - refresh canvas state after undo/redo
         socket.on(SocketEvents.HISTORY_SYNC, (data: any) => {
-            socket.emit(SocketEvents.ROOM_JOIN, { sessionId: sessionService.getSessionId(), displayName, roomCode });
+            console.log(`🔄 HISTORY_SYNC received: action=${data?.action}, triggeredBy=${data?.triggeredBy}`);
+            // Re-request room state to get updated operations after undo/redo
+            // This triggers ROOM_JOINED which will replay all non-undone operations
+            socket.emit(SocketEvents.ROOM_JOIN, {
+                sessionId: sessionService.getSessionId(),
+                displayName: storedName,
+                roomCode,
+                password: storedPassword || undefined,
+            });
         });
 
         socket.on(SocketEvents.ROOM_KICKED, (data: any) => {
@@ -186,7 +220,12 @@ export default function RoomPage() {
             if (data.message === 'Room not found') navigate('/');
         });
 
-        socket.emit(SocketEvents.ROOM_JOIN, { sessionId: sessionService.getSessionId(), displayName: storedName, roomCode });
+        socket.emit(SocketEvents.ROOM_JOIN, {
+            sessionId: sessionService.getSessionId(),
+            displayName: storedName,
+            roomCode,
+            password: storedPassword || undefined,
+        });
 
         // Cleanup - remove all listeners before disconnecting
         return () => {
@@ -450,12 +489,51 @@ export default function RoomPage() {
         // Save to localStorage via sessionService (for persistence)
         sessionService.setDisplayName(joinName.trim());
 
-        // Update the user store state using the hook's setter (triggers re-render and useEffect)
-        setDisplayName(joinName.trim());
-
-        // Hide the form - the useEffect will now detect displayName and connect
-        setShowJoinForm(false);
+        // Clear any previous error
         setJoinError('');
+
+        // Connect and attempt to join with password
+        const socket = socketService.connect();
+
+        const cleanup = () => {
+            socket.off(SocketEvents.ROOM_JOINED, onSuccess);
+            socket.off(SocketEvents.ROOM_ERROR, onError);
+        };
+
+        const onSuccess = (data: any) => {
+            // Mark this TAB as having joined this room (for page refresh support)
+            const joinedKey = `joined_room_${roomCode}`;
+            sessionStorage.setItem(joinedKey, 'true');
+
+            // Store the password in sessionStorage for reconnects
+            if (joinPassword) {
+                sessionStorage.setItem(`room_password_${roomCode}`, joinPassword);
+            }
+
+            // Update the user store state
+            setDisplayName(joinName.trim());
+
+            // Hide the form - room data will be set by the main useEffect handlers
+            setShowJoinForm(false);
+            cleanup();
+        };
+
+        const onError = (data: any) => {
+            setJoinError(data.message || 'Failed to join room');
+            cleanup();
+            // Keep the form visible so user can retry
+        };
+
+        socket.on(SocketEvents.ROOM_JOINED, onSuccess);
+        socket.on(SocketEvents.ROOM_ERROR, onError);
+
+        // Emit join with password!
+        socket.emit(SocketEvents.ROOM_JOIN, {
+            sessionId: sessionService.getSessionId(),
+            displayName: joinName.trim(),
+            roomCode,
+            password: joinPassword || undefined,
+        });
     };
 
     // Show join form for users opening shared links

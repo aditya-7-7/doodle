@@ -62,6 +62,13 @@ async function bootstrap() {
         registerCursorHandlers(socket);
         registerHistoryHandlers(socket);
 
+        // Ping handler for latency measurement
+        socket.on('ping', (data: any, callback: Function) => {
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+
         socket.on('disconnect', () => {
             console.log(`🔌 Client disconnected: ${socket.id}`);
         });
