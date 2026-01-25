@@ -3,7 +3,8 @@ import { Socket } from 'socket.io';
 // Room Types
 export interface RoomSettings {
     isPrivate: boolean;
-    password?: string;
+    password?: string;  // Hashed for verification
+    passwordPlain?: string;  // Plain text for admin display
     canvasWidth: number;
     canvasHeight: number;
     maxUsers: number;
@@ -130,6 +131,8 @@ export enum SocketEvents {
     ROOM_USER_LEFT = 'room:user-left',
     ROOM_KICK = 'room:kick',
     ROOM_KICKED = 'room:kicked',
+    ROOM_UPDATE_PRIVACY = 'room:update-privacy',
+    ROOM_SETTINGS_UPDATED = 'room:settings-updated',
     ROOM_ERROR = 'room:error',
 
     // Draw Events
@@ -146,9 +149,12 @@ export enum SocketEvents {
     // History Events
     HISTORY_UNDO = 'history:undo',
     HISTORY_REDO = 'history:redo',
+    HISTORY_UNDO_PERSONAL = 'history:undo-personal',
+    HISTORY_REDO_PERSONAL = 'history:redo-personal',
     HISTORY_SYNC = 'history:sync',
 
     // Canvas Events
     CANVAS_LOAD = 'canvas:load',
     CANVAS_SNAPSHOT = 'canvas:snapshot',
+    CANVAS_SNAPSHOT_REQUEST = 'canvas:snapshot-request',  // Server requests snapshot from client
 }

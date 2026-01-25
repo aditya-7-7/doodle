@@ -29,19 +29,9 @@ class SocketService {
             reconnectionDelay: 1000,
         });
 
-        this.socket.on('connect', () => {
-            console.log('🔌 Connected to server');
-            this.isConnected = true;
-        });
-
-        this.socket.on('disconnect', () => {
-            console.log('🔌 Disconnected from server');
-            this.isConnected = false;
-        });
-
-        this.socket.on('connect_error', (error) => {
-            console.error('❌ Connection error:', error);
-        });
+        this.socket.on('connect', () => this.isConnected = true);
+        this.socket.on('disconnect', () => this.isConnected = false);
+        this.socket.on('connect_error', () => this.isConnected = false);
 
         return this.socket;
     }

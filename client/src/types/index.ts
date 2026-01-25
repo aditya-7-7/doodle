@@ -10,6 +10,8 @@ export enum SocketEvents {
     ROOM_USER_LEFT = 'room:user-left',
     ROOM_KICK = 'room:kick',
     ROOM_KICKED = 'room:kicked',
+    ROOM_UPDATE_PRIVACY = 'room:update-privacy',
+    ROOM_SETTINGS_UPDATED = 'room:settings-updated',
     ROOM_ERROR = 'room:error',
 
     // Draw Events
@@ -26,17 +28,21 @@ export enum SocketEvents {
     // History Events
     HISTORY_UNDO = 'history:undo',
     HISTORY_REDO = 'history:redo',
+    HISTORY_UNDO_PERSONAL = 'history:undo-personal',
+    HISTORY_REDO_PERSONAL = 'history:redo-personal',
     HISTORY_SYNC = 'history:sync',
 
     // Canvas Events
     CANVAS_LOAD = 'canvas:load',
     CANVAS_SNAPSHOT = 'canvas:snapshot',
+    CANVAS_SNAPSHOT_REQUEST = 'canvas:snapshot-request',
 }
 
 // Room interfaces
 export interface RoomSettings {
     isPrivate: boolean;
-    password?: string;
+    password?: string;  // Hashed (not displayed)
+    passwordPlain?: string;  // Plain text for admin display
     canvasWidth: number;
     canvasHeight: number;
     maxUsers: number;
@@ -68,8 +74,8 @@ export interface RoomMember {
 }
 
 // Drawing types
-export type ToolType = 'brush' | 'eraser' | 'shapes' | 'text' | 'select';
-export type ShapeType = 'rect' | 'circle' | 'line';
+export type ToolType = 'brush' | 'eraser' | 'line' | 'shapes' | 'text' | 'select';
+export type ShapeType = 'rect' | 'circle' | 'triangle' | 'diamond';
 
 export interface Point {
     x: number;
@@ -111,10 +117,3 @@ export const COLORS = [
 ];
 
 export const STROKE_WIDTHS = [2, 4, 6, 8, 12, 16, 24];
-
-export const CANVAS_SIZES = [
-    { name: 'HD', width: 1920, height: 1080 },
-    { name: 'Square', width: 1080, height: 1080 },
-    { name: '4K', width: 3840, height: 2160 },
-    { name: 'Portrait', width: 1080, height: 1920 },
-];

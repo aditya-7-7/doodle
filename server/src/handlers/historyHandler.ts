@@ -4,47 +4,47 @@ import { drawService, webSocketService } from '../services';
 
 export const registerHistoryHandlers = (socket: ExtendedSocket): void => {
 
-    // Handle Undo
     socket.on(SocketEvents.HISTORY_UNDO, async () => {
         if (!socket.roomCode || !socket.sessionId) return;
-
         try {
             const undoneOp = await drawService.undo(socket.roomCode);
-
             if (undoneOp) {
-                // Broadcast to all in room (including sender)
-                webSocketService.sendToRoom(socket.roomCode, SocketEvents.HISTORY_SYNC, {
-                    action: 'undo',
-                    operation: undoneOp,
-                    triggeredBy: socket.sessionId,
-                });
-
-                console.log(`↩️ Undo in room ${socket.roomCode} by ${socket.displayName}`);
+                const operations = await drawService.getOperations(socket.roomCode, 0);
+                webSocketService.sendToRoom(socket.roomCode, SocketEvents.HISTORY_SYNC, { action: 'undo', isPersonal: false, operation: undoneOp, operations, triggeredBy: socket.sessionId });
             }
-        } catch (error) {
-            console.error('❌ Error performing undo:', error);
-        }
+        } catch (error) { console.error('Error performing global undo:', error); }
     });
 
-    // Handle Redo
     socket.on(SocketEvents.HISTORY_REDO, async () => {
         if (!socket.roomCode || !socket.sessionId) return;
-
         try {
             const redoneOp = await drawService.redo(socket.roomCode);
-
             if (redoneOp) {
-                // Broadcast to all in room (including sender)
-                webSocketService.sendToRoom(socket.roomCode, SocketEvents.HISTORY_SYNC, {
-                    action: 'redo',
-                    operation: redoneOp,
-                    triggeredBy: socket.sessionId,
-                });
-
-                console.log(`↪️ Redo in room ${socket.roomCode} by ${socket.displayName}`);
+                const operations = await drawService.getOperations(socket.roomCode, 0);
+                webSocketService.sendToRoom(socket.roomCode, SocketEvents.HISTORY_SYNC, { action: 'redo', isPersonal: false, operation: redoneOp, operations, triggeredBy: socket.sessionId });
             }
-        } catch (error) {
-            console.error('❌ Error performing redo:', error);
-        }
+        } catch (error) { console.error('Error performing global redo:', error); }
+    });
+
+    socket.on(SocketEvents.HISTORY_UNDO_PERSONAL, async () => {
+        if (!socket.roomCode || !socket.sessionId) return;
+        try {
+            const undoneOp = await drawService.undoPersonal(socket.roomCode, socket.sessionId);
+            if (undoneOp) {
+                const operations = await drawService.getOperations(socket.roomCode, 0);
+                webSocketService.sendToRoom(socket.roomCode, SocketEvents.HISTORY_SYNC, { action: 'undo', isPersonal: true, operation: undoneOp, operations, triggeredBy: socket.sessionId });
+            }
+        } catch (error) { console.error('Error performing personal undo:', error); }
+    });
+
+    socket.on(SocketEvents.HISTORY_REDO_PERSONAL, async () => {
+        if (!socket.roomCode || !socket.sessionId) return;
+        try {
+            const redoneOp = await drawService.redoPersonal(socket.roomCode, socket.sessionId);
+            if (redoneOp) {
+                const operations = await drawService.getOperations(socket.roomCode, 0);
+                webSocketService.sendToRoom(socket.roomCode, SocketEvents.HISTORY_SYNC, { action: 'redo', isPersonal: true, operation: redoneOp, operations, triggeredBy: socket.sessionId });
+            }
+        } catch (error) { console.error('Error performing personal redo:', error); }
     });
 };

@@ -1,5 +1,8 @@
+import bcrypt from 'bcrypt';
 import { Room, RoomMember, USER_COLORS } from '../models';
 import { CreateRoomPayload, JoinRoomPayload, RoomSettings } from '../types';
+
+const SALT_ROUNDS = 10;
 
 class RoomService {
     private static instance: RoomService;
@@ -45,6 +48,12 @@ class RoomService {
             existingRoom = await Room.findOne({ code });
         }
 
+        // Hash password if provided, but also store plain for admin display
+        const plainPassword = payload.settings?.password || null;
+        const hashedPassword = plainPassword
+            ? await bcrypt.hash(plainPassword, SALT_ROUNDS)
+            : null;
+
         // Create room
         const room = await Room.create({
             code,
@@ -52,10 +61,11 @@ class RoomService {
             creatorSessionId: payload.sessionId,
             settings: {
                 isPrivate: payload.settings?.isPrivate || false,
-                password: payload.settings?.password || null,
+                password: hashedPassword,
+                passwordPlain: plainPassword,  // Store plain for admin
                 canvasWidth: payload.settings?.canvasWidth || 1920,
                 canvasHeight: payload.settings?.canvasHeight || 1080,
-                maxUsers: payload.settings?.maxUsers || 20,
+                maxUsers: payload.settings?.maxUsers || 10,
             },
         });
 
@@ -88,7 +98,10 @@ class RoomService {
         if (room.settings.isPrivate && room.settings.password) {
             // Allow creator and existing members to rejoin without password
             if (!isCreator && !existingMember) {
-                if (payload.password !== room.settings.password) {
+                const isValidPassword = payload.password
+                    ? await bcrypt.compare(payload.password, room.settings.password)
+                    : false;
+                if (!isValidPassword) {
                     return { room: null, member: null, members: [], error: 'Invalid password' };
                 }
             }
@@ -198,6 +211,33 @@ class RoomService {
             { roomId: roomCode, sessionId: sessionId },
             { isOnline: false, lastSeenAt: new Date() }
         );
+    }
+
+    // Update room privacy settings (admin only)
+    public async updateRoomPrivacy(roomCode: string, sessionId: string, isPrivate: boolean, password?: string): Promise<any> {
+        // Check if user is admin
+        const member = await RoomMember.findOne({ roomId: roomCode, sessionId });
+        if (!member?.isAdmin) return null;
+
+        const updateData: any = { 'settings.isPrivate': isPrivate };
+
+        if (isPrivate && password) {
+            // Hash new password
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+            updateData['settings.password'] = hashedPassword;
+            updateData['settings.passwordPlain'] = password;
+        } else if (!isPrivate) {
+            // Clear password when making public
+            updateData['settings.password'] = null;
+            updateData['settings.passwordPlain'] = null;
+        }
+
+        const room = await Room.findOneAndUpdate(
+            { code: roomCode },
+            { $set: updateData },
+            { new: true }
+        );
+        return room?.toObject();
     }
 }
 

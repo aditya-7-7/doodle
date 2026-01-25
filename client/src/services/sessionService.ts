@@ -3,7 +3,6 @@
 
 const SESSION_ID_KEY = 'doodle_session_id';
 const DISPLAY_NAME_KEY = 'doodle_display_name';
-const USER_ID_KEY = 'doodle_user_id';  // For future OAuth
 const RECENT_ROOMS_KEY = 'doodle_recent_rooms';
 
 interface RecentRoom {
@@ -47,21 +46,9 @@ class SessionService {
         localStorage.setItem(DISPLAY_NAME_KEY, name);
     }
 
-    // For future OAuth
-    public getUserId(): string | null {
-        return localStorage.getItem(USER_ID_KEY);
-    }
-
-    public setUserId(userId: string): void {
-        localStorage.setItem(USER_ID_KEY, userId);
-    }
-
     // Get identifier for server
-    public getIdentifier(): { sessionId: string; userId?: string } {
-        return {
-            sessionId: this.getSessionId(),
-            userId: this.getUserId() || undefined,
-        };
+    public getIdentifier(): { sessionId: string } {
+        return { sessionId: this.getSessionId() };
     }
 
     // Recent rooms management
@@ -100,13 +87,9 @@ class SessionService {
         localStorage.setItem(RECENT_ROOMS_KEY, JSON.stringify(filtered));
     }
 
-    // Clear all session data
     public clearSession(): void {
-        // Remove sessionId from sessionStorage (per-tab)
         sessionStorage.removeItem(SESSION_ID_KEY);
-        // Remove other data from localStorage
         localStorage.removeItem(DISPLAY_NAME_KEY);
-        localStorage.removeItem(USER_ID_KEY);
         localStorage.removeItem(RECENT_ROOMS_KEY);
     }
 }

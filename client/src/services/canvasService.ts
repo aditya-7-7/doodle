@@ -11,6 +11,10 @@ class CanvasService {
     private batchTimeout: number | null = null;
     private readonly BATCH_DELAY = 50; // ms
 
+    // Pending operations queue - for when canvas isn't ready yet
+    private pendingCallbacks: (() => void)[] = [];
+    private isReady = false;
+
     private constructor() { }
 
     public static getInstance(): CanvasService {
@@ -28,6 +32,34 @@ class CanvasService {
             this.ctx.lineCap = 'round';
             this.ctx.lineJoin = 'round';
         }
+        this.isReady = true;
+        // Execute any pending callbacks
+        while (this.pendingCallbacks.length > 0) {
+            const cb = this.pendingCallbacks.shift();
+            cb?.();
+        }
+    }
+
+    // Queue callback for when canvas is ready, or execute immediately if ready
+    public whenReady(callback: () => void): void {
+        if (this.isReady && this.canvas && this.ctx) {
+            callback();
+        } else {
+            this.pendingCallbacks.push(callback);
+        }
+    }
+
+    // Reset state (call when leaving a room)
+    public reset(): void {
+        this.canvas = null;
+        this.ctx = null;
+        this.isReady = false;
+        this.pendingCallbacks = [];
+        this.batchedCommands = [];
+        if (this.batchTimeout !== null) {
+            clearTimeout(this.batchTimeout);
+            this.batchTimeout = null;
+        }
     }
 
     public getCanvas(): HTMLCanvasElement | null {
@@ -36,6 +68,15 @@ class CanvasService {
 
     public getContext(): CanvasRenderingContext2D | null {
         return this.ctx;
+    }
+
+    // Get scale factor (canvas internal size / display size)
+    // This scales stroke widths to appear consistent regardless of display size
+    public getScaleFactor(): number {
+        if (!this.canvas) return 1;
+        const displayWidth = this.canvas.getBoundingClientRect().width;
+        if (displayWidth === 0) return 1;
+        return this.canvas.width / displayWidth;
     }
 
     // Convert pixel to normalized coordinates (0-1)
@@ -72,11 +113,14 @@ class CanvasService {
         const start = this.denormalizePoint(startX, startY);
         const end = this.denormalizePoint(endX, endY);
 
+        // Scale width for display
+        const scaledWidth = width * this.getScaleFactor();
+
         this.ctx.beginPath();
         this.ctx.moveTo(start.x, start.y);
         this.ctx.lineTo(end.x, end.y);
         this.ctx.strokeStyle = color;
-        this.ctx.lineWidth = width;
+        this.ctx.lineWidth = scaledWidth;
         this.ctx.stroke();
     }
 
@@ -85,8 +129,9 @@ class CanvasService {
         if (!this.ctx || !this.canvas) return;
 
         const point = this.denormalizePoint(x, y);
+        const scaledSize = size * this.getScaleFactor();
         this.ctx.fillStyle = 'white';
-        this.ctx.fillRect(point.x - size / 2, point.y - size / 2, size, size);
+        this.ctx.fillRect(point.x - scaledSize / 2, point.y - scaledSize / 2, scaledSize, scaledSize);
     }
 
     // Clear entire canvas
@@ -98,7 +143,7 @@ class CanvasService {
 
     // Draw shape (normalized coords)
     public drawShape(
-        type: 'rect' | 'circle' | 'line',
+        type: 'rect' | 'circle' | 'line' | 'triangle' | 'diamond',
         startX: number,
         startY: number,
         endX: number,
@@ -111,9 +156,10 @@ class CanvasService {
 
         const start = this.denormalizePoint(startX, startY);
         const end = this.denormalizePoint(endX, endY);
+        const scaledWidth = width * this.getScaleFactor();
 
         this.ctx.strokeStyle = color;
-        this.ctx.lineWidth = width;
+        this.ctx.lineWidth = scaledWidth;
         this.ctx.beginPath();
 
         switch (type) {
@@ -139,9 +185,33 @@ class CanvasService {
                 this.ctx.stroke();
                 break;
 
-            case 'line':
-                this.ctx.moveTo(start.x, start.y);
-                this.ctx.lineTo(end.x, end.y);
+            case 'triangle':
+                // Draw equilateral-ish triangle from start to end
+                const midX = (start.x + end.x) / 2;
+                this.ctx.moveTo(midX, start.y); // Top
+                this.ctx.lineTo(end.x, end.y); // Bottom right
+                this.ctx.lineTo(start.x, end.y); // Bottom left
+                this.ctx.closePath();
+                if (fill) {
+                    this.ctx.fillStyle = fill;
+                    this.ctx.fill();
+                }
+                this.ctx.stroke();
+                break;
+
+            case 'diamond':
+                // Draw diamond from start to end
+                const centerX = (start.x + end.x) / 2;
+                const centerY = (start.y + end.y) / 2;
+                this.ctx.moveTo(centerX, start.y); // Top
+                this.ctx.lineTo(end.x, centerY); // Right
+                this.ctx.lineTo(centerX, end.y); // Bottom
+                this.ctx.lineTo(start.x, centerY); // Left
+                this.ctx.closePath();
+                if (fill) {
+                    this.ctx.fillStyle = fill;
+                    this.ctx.fill();
+                }
                 this.ctx.stroke();
                 break;
         }
@@ -158,7 +228,8 @@ class CanvasService {
         if (!this.ctx || !this.canvas) return;
 
         const point = this.denormalizePoint(x, y);
-        this.ctx.font = `${fontSize}px Inter, sans-serif`;
+        const scaledFontSize = fontSize * this.getScaleFactor();
+        this.ctx.font = `${scaledFontSize}px Inter, sans-serif`;
         this.ctx.fillStyle = color;
         this.ctx.fillText(text, point.x, point.y);
     }

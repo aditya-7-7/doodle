@@ -3,9 +3,14 @@ import { OperationType } from '../types';
 
 class DrawService {
     private static instance: DrawService;
-    private sequenceCounters: Map<string, number> = new Map();
+    private sequenceCounters: Map<string, { seq: number; lastAccess: number }> = new Map();
+    private readonly CLEANUP_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+    private readonly STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-    private constructor() { }
+    private constructor() {
+        // Periodic cleanup of stale room entries
+        setInterval(() => this.cleanupStaleEntries(), this.CLEANUP_INTERVAL_MS);
+    }
 
     public static getInstance(): DrawService {
         if (!DrawService.instance) {
@@ -14,48 +19,37 @@ class DrawService {
         return DrawService.instance;
     }
 
-    // Get next sequence number for a room
-    public async getNextSequence(roomId: string): Promise<number> {
-        // Try from cache first
-        let seq = this.sequenceCounters.get(roomId);
-
-        if (seq === undefined) {
-            // Load from database
-            const lastOp = await DrawingOperation.findOne({ roomId }).sort({ sequenceNumber: -1 });
-            seq = lastOp ? lastOp.sequenceNumber : 0;
+    private cleanupStaleEntries(): void {
+        const now = Date.now();
+        for (const [roomId, data] of this.sequenceCounters.entries()) {
+            if (now - data.lastAccess > this.STALE_THRESHOLD_MS) this.sequenceCounters.delete(roomId);
         }
-
-        seq += 1;
-        this.sequenceCounters.set(roomId, seq);
-        return seq;
     }
 
-    // Save a drawing operation
-    public async saveOperation(
-        roomId: string,
-        sessionId: string,
-        type: OperationType,
-        data: any
-    ): Promise<any> {
-        const sequenceNumber = await this.getNextSequence(roomId);
+    public cleanupRoom(roomId: string): void { this.sequenceCounters.delete(roomId); }
 
-        const operation = await DrawingOperation.create({
-            roomId,
-            sessionId,
-            sequenceNumber,
-            type,
-            data,
-            timestamp: new Date(),
-            isUndone: false,
-        });
+    // Get next sequence number for a room
+    public async getNextSequence(roomId: string): Promise<number> {
+        const now = Date.now();
+        // Try from cache first
+        let entry = this.sequenceCounters.get(roomId);
 
-        // Create snapshot every 50 operations
-        if (sequenceNumber % 50 === 0) {
-            console.log(`📸 Snapshot should be created at sequence ${sequenceNumber}`);
-            // Snapshot creation is triggered by client sending canvas state
+        if (!entry) {
+            // Load from database
+            const lastOp = await DrawingOperation.findOne({ roomId }).sort({ sequenceNumber: -1 });
+            entry = { seq: lastOp ? lastOp.sequenceNumber : 0, lastAccess: now };
         }
 
-        return operation.toObject();
+        entry.seq += 1;
+        entry.lastAccess = now;
+        this.sequenceCounters.set(roomId, entry);
+        return entry.seq;
+    }
+
+    public async saveOperation(roomId: string, sessionId: string, type: OperationType, data: any): Promise<{ operation: any; needsSnapshot: boolean }> {
+        const sequenceNumber = await this.getNextSequence(roomId);
+        const operation = await DrawingOperation.create({ roomId, sessionId, sequenceNumber, type, data, timestamp: new Date(), isUndone: false });
+        return { operation: operation.toObject(), needsSnapshot: sequenceNumber % 50 === 0 };
     }
 
     // Get all non-undone operations for a room
@@ -69,7 +63,7 @@ class DrawService {
         return operations.map(op => op.toObject());
     }
 
-    // Undo last operation
+    // Global Undo - undo last operation (any user)
     public async undo(roomId: string): Promise<any | null> {
         const lastOp = await DrawingOperation.findOne({
             roomId,
@@ -84,24 +78,58 @@ class DrawService {
         return null;
     }
 
-    // Redo last undone operation
+    // Global Redo - redo the operation that was undone most recently
+    // (the one with lowest sequence number among undone ops - oldest undone = most recent undo)
     public async redo(roomId: string): Promise<any | null> {
-        const lastUndone = await DrawingOperation.findOne({
+        const oldestUndone = await DrawingOperation.findOne({
             roomId,
             isUndone: true,
+        }).sort({ sequenceNumber: 1 });  // Changed: ascending order to get oldest undone
+
+        if (oldestUndone) {
+            oldestUndone.isUndone = false;
+            await oldestUndone.save();
+            return oldestUndone.toObject();
+        }
+        return null;
+    }
+
+    // Personal Undo - undo last operation by this specific user
+    public async undoPersonal(roomId: string, sessionId: string): Promise<any | null> {
+        const lastOp = await DrawingOperation.findOne({
+            roomId,
+            sessionId,
+            isUndone: false,
         }).sort({ sequenceNumber: -1 });
 
-        if (lastUndone) {
-            lastUndone.isUndone = false;
-            await lastUndone.save();
-            return lastUndone.toObject();
+        if (lastOp) {
+            lastOp.isUndone = true;
+            await lastOp.save();
+            return lastOp.toObject();
+        }
+        return null;
+    }
+
+    // Personal Redo - redo last undone operation by this specific user
+    public async redoPersonal(roomId: string, sessionId: string): Promise<any | null> {
+        const oldestUndone = await DrawingOperation.findOne({
+            roomId,
+            sessionId,
+            isUndone: true,
+        }).sort({ sequenceNumber: 1 });  // Oldest undone = most recently undone
+
+        if (oldestUndone) {
+            oldestUndone.isUndone = false;
+            await oldestUndone.save();
+            return oldestUndone.toObject();
         }
         return null;
     }
 
     // Save canvas snapshot
     public async saveSnapshot(roomId: string, imageData: string): Promise<void> {
-        const seq = this.sequenceCounters.get(roomId) || 0;
+        const entry = this.sequenceCounters.get(roomId);
+        const seq = entry?.seq || 0;
 
         await CanvasSnapshot.create({
             roomId,

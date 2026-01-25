@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 import { connectDatabase } from './config/database';
 import { webSocketService } from './services/WebSocketService';
@@ -19,9 +20,21 @@ dotenv.config();
 const PORT = process.env.PORT || 4000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
+// Rate limiting configuration
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: { error: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 async function bootstrap() {
     // Create Express app
     const app = express();
+
+    // Apply rate limiting to all routes
+    app.use(apiLimiter);
 
     // Middleware
     app.use(cors({

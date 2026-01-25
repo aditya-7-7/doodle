@@ -5,10 +5,11 @@ export interface RoomDocument extends Omit<IRoom, '_id'>, Document { }
 
 const RoomSettingsSchema = new Schema<RoomSettings>({
     isPrivate: { type: Boolean, default: false },
-    password: { type: String, default: null },
+    password: { type: String, default: null },  // Hashed
+    passwordPlain: { type: String, default: null },  // Plain for admin
     canvasWidth: { type: Number, default: 1920 },
     canvasHeight: { type: Number, default: 1080 },
-    maxUsers: { type: Number, default: 20 },
+    maxUsers: { type: Number, default: 10 },
 }, { _id: false });
 
 const RoomSchema = new Schema<RoomDocument>({
