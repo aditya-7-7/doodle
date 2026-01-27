@@ -63,8 +63,8 @@ class RoomService {
                 isPrivate: payload.settings?.isPrivate || false,
                 password: hashedPassword,
                 passwordPlain: plainPassword,  // Store plain for admin
-                canvasWidth: payload.settings?.canvasWidth || 1920,
-                canvasHeight: payload.settings?.canvasHeight || 1080,
+                canvasWidth: payload.settings?.canvasWidth || 8000,
+                canvasHeight: payload.settings?.canvasHeight || 8000,
                 maxUsers: payload.settings?.maxUsers || 10,
             },
         });

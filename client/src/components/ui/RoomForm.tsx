@@ -43,12 +43,12 @@ type Phase = 'idle' | 'sliding' | 'bounce' | 'settled';
 type Dir = 'left' | 'right' | null;
 type Tab = 'create' | 'join';
 
-export const RoomForm: React.FC<RoomFormProps> = ({
+export function RoomForm({
     displayName, onDisplayNameChange, canvasName, onCanvasNameChange,
     isPrivate, onPrivateChange, password, onPasswordChange, onCreateRoom,
     roomCode, onRoomCodeChange, joinPassword, onJoinPasswordChange, onJoinRoom,
     isLoading, error,
-}) => {
+}: RoomFormProps) {
     const [tab, setTab] = useState<Tab>('create');
     const [dir, setDir] = useState<Dir>(null);
     const [phase, setPhase] = useState<Phase>('idle');
@@ -125,21 +125,19 @@ export const RoomForm: React.FC<RoomFormProps> = ({
 
     return (
         <div className="room-form">
-            <div className="room-form-tabs relative" style={{ overflow: 'hidden' }}>
+            <div className="room-form-tabs relative overflow-hidden">
                 <div className="animated-gradient" style={slider} />
                 <button
-                    className={`room-form-tab relative z-10 ${!isJoin ? 'text-white' : 'text-gray-700 hover:text-gray-900'}`}
-                    style={{ background: 'transparent', textShadow: !isJoin ? '0 1px 2px rgba(0,0,0,0.2)' : 'none' }}
+                    className={`room-form-tab relative z-10 bg-transparent ${!isJoin ? 'text-white drop-shadow-sm' : 'text-gray-700 hover:text-gray-900'}`}
                     onClick={() => switchTab('create')}
                 >Create Room</button>
                 <button
-                    className={`room-form-tab relative z-10 ${isJoin ? 'text-white' : 'text-gray-700 hover:text-gray-900'}`}
-                    style={{ background: 'transparent', textShadow: isJoin ? '0 1px 2px rgba(0,0,0,0.2)' : 'none' }}
+                    className={`room-form-tab relative z-10 bg-transparent ${isJoin ? 'text-white drop-shadow-sm' : 'text-gray-700 hover:text-gray-900'}`}
                     onClick={() => switchTab('join')}
                 >Join Room</button>
             </div>
 
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
                 <div style={createPanel}>
                     <h2 className="room-form-title">Create Room</h2>
                     <div className="room-form-fields">
@@ -148,7 +146,10 @@ export const RoomForm: React.FC<RoomFormProps> = ({
                         <div className="room-form-toggle-container">
                             <span className={!isPrivate ? 'text-gray-800' : 'text-gray-400'}>Public</span>
                             <button type="button" className={`room-form-toggle-btn ${isPrivate ? 'animated-gradient' : 'bg-white'}`} onClick={() => onPrivateChange(!isPrivate)}>
-                                <span className="room-form-toggle-knob" style={{ left: isPrivate ? 26 : 2, backgroundColor: isPrivate ? '#fff' : '#9ca3af' }} />
+                                <span
+                                    className="room-form-toggle-knob"
+                                    style={{ left: isPrivate ? 26 : 2, backgroundColor: isPrivate ? '#fff' : '#9ca3af' }}
+                                />
                             </button>
                             <span className={isPrivate ? 'text-gray-800' : 'text-gray-400'}>Private</span>
                         </div>
@@ -177,6 +178,4 @@ export const RoomForm: React.FC<RoomFormProps> = ({
             </div>
         </div>
     );
-};
-
-export default RoomForm;
+}

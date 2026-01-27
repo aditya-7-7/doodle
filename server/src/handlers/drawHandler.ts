@@ -1,4 +1,3 @@
-import { Socket } from 'socket.io';
 import { SocketEvents, ExtendedSocket } from '../types';
 import { drawService, webSocketService } from '../services';
 
@@ -25,17 +24,17 @@ export const registerDrawHandlers = (socket: ExtendedSocket): void => {
         });
     });
 
-    socket.on(SocketEvents.DRAW_STROKE, async (payload: { commands: number[][] }) => {
+    socket.on(SocketEvents.DRAW_STROKE, async (payload: { commands: number[][], color?: string }) => {
         if (!socket.roomCode || !socket.sessionId) return;
-        webSocketService.sendToRoomExcept(socket, socket.roomCode, SocketEvents.DRAW_STROKE, { sessionId: socket.sessionId, commands: payload.commands });
+        webSocketService.sendToRoomExcept(socket, socket.roomCode, SocketEvents.DRAW_STROKE, { sessionId: socket.sessionId, commands: payload.commands, color: payload.color });
     });
 
-    socket.on('draw:stroke-end', async (payload: { points: number[][], colorIndex: number, width: number, tool: string }) => {
+    socket.on('draw:stroke-end', async (payload: { points: number[][], colorIndex: number, width: number, tool: string, color?: string }) => {
         if (!socket.roomCode || !socket.sessionId || payload.points.length === 0) return;
         try {
             const type = payload.tool === 'brush' ? 'stroke' : payload.tool === 'eraser' ? 'erase' : null;
             if (!type) return;
-            const data = type === 'stroke' ? { points: payload.points, colorIndex: payload.colorIndex, width: payload.width } : { points: payload.points, size: payload.width * 3 };
+            const data = type === 'stroke' ? { points: payload.points, colorIndex: payload.colorIndex, width: payload.width, color: payload.color } : { points: payload.points, size: payload.width * 3 };
             const { needsSnapshot } = await drawService.saveOperation(socket.roomCode, socket.sessionId, type, data);
             requestSnapshotIfNeeded(socket, needsSnapshot);
         } catch (error) { console.error('Error saving stroke:', error); }

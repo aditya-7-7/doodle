@@ -66,8 +66,7 @@ export function JoinRoomModal({ roomCode, joinName, setJoinName, joinPassword, s
                         <button
                             type="button"
                             onClick={() => navigate('/')}
-                            className="room-form-btn bg-gray-200 text-gray-700"
-                            style={{ textShadow: 'none' }}
+                            className="room-form-btn bg-gray-200 text-gray-700 [text-shadow:none]"
                         >
                             Go to Home
                         </button>

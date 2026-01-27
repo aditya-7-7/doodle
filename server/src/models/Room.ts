@@ -7,8 +7,8 @@ const RoomSettingsSchema = new Schema<RoomSettings>({
     isPrivate: { type: Boolean, default: false },
     password: { type: String, default: null },  // Hashed
     passwordPlain: { type: String, default: null },  // Plain for admin
-    canvasWidth: { type: Number, default: 1920 },
-    canvasHeight: { type: Number, default: 1080 },
+    canvasWidth: { type: Number, default: 8000 },
+    canvasHeight: { type: Number, default: 8000 },
     maxUsers: { type: Number, default: 10 },
 }, { _id: false });
 

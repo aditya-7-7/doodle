@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, CSSProperties } from "react";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
 
 // Typed style constants
 const fadeGradient: CSSProperties = { background: "radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(255,255,255,0.5) 80%, white 95%)" };
@@ -49,7 +48,7 @@ export const Boxes = React.memo(({ className }: { className?: string }) => {
     if (!grid.cols) return null;
 
     return (
-        <div className={cn("fixed inset-0 z-[5]", className)}>
+        <div className={`fixed inset-0 z-[5] ${className || ''}`}>
             {/* Grid container */}
             <div
                 className="absolute inset-0 w-full h-full"

@@ -33,20 +33,36 @@ export function useRoomSocket(roomCode: string | undefined): UseRoomSocketReturn
 
     const replayOperation = useCallback((op: any) => {
         const d = op.data;
-        const color = COLORS[d?.colorIndex] || '#000000';
+        // Use color value if provided, otherwise fall back to colorIndex
+        const color = d.color || (COLORS[d?.colorIndex] || '#000000');
         switch (op.type) {
             case 'stroke': d?.points?.forEach((p: number[], i: number, arr: number[][]) => i < arr.length - 1 && canvasService.drawLine(p[0], p[1], arr[i + 1][0], arr[i + 1][1], color, d.width || 3)); break;
             case 'erase': d?.points?.forEach((p: number[]) => canvasService.erase(p[0], p[1], d.size || 20)); break;
-            case 'shape': canvasService.drawShape(d.shapeType, d.startX, d.startY, d.endX, d.endY, color, d.width || 3); break;
-            case 'text': canvasService.drawText(d.text, d.x, d.y, d.fontSize || 24, color); break;
+            case 'shape': {
+                // Use color values if provided, otherwise fall back to colorIndex/fillColorIndex
+                const outlineColor = d.color || color;
+                const fill = d.fillColor || (d.fillColorIndex >= 0 ? COLORS[d.fillColorIndex] : undefined);
+                canvasService.drawShape(d.shapeType, d.startX, d.startY, d.endX, d.endY, outlineColor, d.width || 3, fill);
+                break;
+            }
+            case 'text': {
+                // Use color value if provided, otherwise fall back to colorIndex
+                const textColor = d.color || color;
+                canvasService.drawText(d.text, d.x, d.y, d.fontSize || 24, textColor);
+                break;
+            }
             case 'clear': canvasService.clear(); break;
         }
     }, []);
 
-    const executeDrawCommand = useCallback((cmd: number[]) => {
+    const executeDrawCommand = useCallback((cmd: number[], color?: string) => {
         const type = cmd[0];
-        if (type === 0) canvasService.drawLine(cmd[1], cmd[2], cmd[3], cmd[4], COLORS[cmd[5] || 0], cmd[6] || 3);
-        else if (type === 1) canvasService.erase(cmd[1], cmd[2], cmd[3] || 20);
+        if (type === 0) {
+            // Use provided color if available, otherwise fall back to color index
+            const strokeColor = color || (COLORS[cmd[5]] || COLORS[0]);
+            canvasService.drawLine(cmd[1], cmd[2], cmd[3], cmd[4], strokeColor, cmd[6] || 3);
+        }
+        else if (type === 1) canvasService.eraseLine(cmd[1], cmd[2], cmd[3], cmd[4], cmd[5] || 20);
     }, []);
 
     // Initialize and connect
@@ -94,15 +110,26 @@ export function useRoomSocket(roomCode: string | undefined): UseRoomSocketReturn
         });
 
         socket.on(SocketEvents.DRAW_STROKE, (data: any) => {
-            if (data.sessionId !== sessionId) data.commands.forEach((cmd: number[]) => executeDrawCommand(cmd));
+            if (data.sessionId !== sessionId) {
+                data.commands.forEach((cmd: number[]) => executeDrawCommand(cmd, data.color));
+            }
         });
 
         socket.on(SocketEvents.DRAW_SHAPE, (data: any) => {
-            if (data.sessionId !== sessionId) canvasService.drawShape(data.shapeType, data.startX, data.startY, data.endX, data.endY, COLORS[data.colorIndex] || '#000000', data.width);
+            if (data.sessionId !== sessionId) {
+                // Use color values if provided, otherwise fall back to colorIndex/fillColorIndex
+                const outlineColor = data.color || (COLORS[data.colorIndex] || '#000000');
+                const fill = data.fillColor || (data.fillColorIndex >= 0 ? COLORS[data.fillColorIndex] : undefined);
+                canvasService.drawShape(data.shapeType, data.startX, data.startY, data.endX, data.endY, outlineColor, data.width, fill);
+            }
         });
 
         socket.on(SocketEvents.DRAW_TEXT, (data: any) => {
-            if (data.sessionId !== sessionId) canvasService.drawText(data.text, data.x, data.y, data.fontSize || 24, COLORS[data.colorIndex] || '#000000');
+            if (data.sessionId !== sessionId) {
+                // Use color value if provided, otherwise fall back to colorIndex
+                const color = data.color || (COLORS[data.colorIndex] || '#000000');
+                canvasService.drawText(data.text, data.x, data.y, data.fontSize || 24, color);
+            }
         });
 
         socket.on(SocketEvents.DRAW_CLEAR, () => canvasService.clear());

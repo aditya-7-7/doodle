@@ -23,11 +23,15 @@
         "paths": {
             "@/*": [
                 "./src/*"
+            ],
+            "@shared/*": [
+                "../shared/*"
             ]
         }
     },
     "include": [
-        "src"
+        "src",
+        "../shared"
     ],
     "references": [
         {

@@ -1,5 +1,6 @@
 import { socketService } from './socketService';
 import { SocketEvents, Point } from '../types';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../constants';
 
 class CanvasService {
     private static instance: CanvasService;
@@ -70,31 +71,38 @@ class CanvasService {
         return this.ctx;
     }
 
-    // Get scale factor (canvas internal size / display size)
-    // This scales stroke widths to appear consistent regardless of display size
+    // Get scale factor - always 1 since we use fixed resolution with CSS scaling
     public getScaleFactor(): number {
-        if (!this.canvas) return 1;
-        const displayWidth = this.canvas.getBoundingClientRect().width;
-        if (displayWidth === 0) return 1;
-        return this.canvas.width / displayWidth;
+        return 1;
     }
 
-    // Convert pixel to normalized coordinates (0-1)
-    public normalizePoint(x: number, y: number): Point {
+    // Convert screen pixel to normalized coordinates (0-1) accounting for zoom/pan
+    // Fixed canvas is 8000x8000
+    // containerRect should be from the parent container, NOT the transformed canvas
+    public normalizePoint(x: number, y: number, zoom: number = 1, panX: number = 0, panY: number = 0, containerRect?: DOMRect): Point {
         if (!this.canvas) return { x: 0, y: 0 };
-        const rect = this.canvas.getBoundingClientRect();
+
+        // Use container rect if provided, otherwise fall back to canvas rect
+        // Container rect is needed because canvas.getBoundingClientRect() includes CSS transforms
+        const rect = containerRect || this.canvas.getBoundingClientRect();
+
+        // Reverse the viewport transform: screen → canvas → normalized
+        // Canvas transform is: translate(panX, panY) scale(zoom)
+        // So reverse: (screen - rect.left - panX) / zoom
+        const canvasX = (x - rect.left - panX) / zoom;
+        const canvasY = (y - rect.top - panY) / zoom;
+
         return {
-            x: (x - rect.left) / rect.width,
-            y: (y - rect.top) / rect.height,
+            x: canvasX / CANVAS_WIDTH,
+            y: canvasY / CANVAS_HEIGHT,
         };
     }
 
-    // Convert normalized to pixel coordinates
+    // Convert normalized to canvas pixel coordinates (using constants)
     public denormalizePoint(x: number, y: number): Point {
-        if (!this.canvas) return { x: 0, y: 0 };
         return {
-            x: x * this.canvas.width,
-            y: y * this.canvas.height,
+            x: x * CANVAS_WIDTH,
+            y: y * CANVAS_HEIGHT,
         };
     }
 
@@ -124,14 +132,35 @@ class CanvasService {
         this.ctx.stroke();
     }
 
-    // Erase at position (normalized coords)
+    // Erase at position (normalized coords) - circular eraser
     public erase(x: number, y: number, size: number = 20): void {
         if (!this.ctx || !this.canvas) return;
 
         const point = this.denormalizePoint(x, y);
-        const scaledSize = size * this.getScaleFactor();
+        const radius = (size * this.getScaleFactor()) / 2;
+
+        this.ctx.beginPath();
+        this.ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
         this.ctx.fillStyle = 'white';
-        this.ctx.fillRect(point.x - scaledSize / 2, point.y - scaledSize / 2, scaledSize, scaledSize);
+        this.ctx.fill();
+    }
+
+    // Erase line between two points (for smooth continuous erasing)
+    public eraseLine(x1: number, y1: number, x2: number, y2: number, size: number = 20): void {
+        if (!this.ctx || !this.canvas) return;
+
+        const start = this.denormalizePoint(x1, y1);
+        const end = this.denormalizePoint(x2, y2);
+        const scaledSize = size * this.getScaleFactor();
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(start.x, start.y);
+        this.ctx.lineTo(end.x, end.y);
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.ctx.strokeStyle = 'white';
+        this.ctx.lineWidth = scaledSize;
+        this.ctx.stroke();
     }
 
     // Clear entire canvas
@@ -160,60 +189,63 @@ class CanvasService {
 
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = scaledWidth;
-        this.ctx.beginPath();
+
+        // Helper to apply fill and stroke
+        const applyFillAndStroke = () => {
+            if (fill) {
+                this.ctx!.fillStyle = fill;
+                this.ctx!.fill();
+            }
+            this.ctx!.stroke();
+        };
 
         switch (type) {
-            case 'rect':
-                const rectWidth = end.x - start.x;
-                const rectHeight = end.y - start.y;
+            case 'rect': {
+                const w = end.x - start.x;
+                const h = end.y - start.y;
                 if (fill) {
                     this.ctx.fillStyle = fill;
-                    this.ctx.fillRect(start.x, start.y, rectWidth, rectHeight);
+                    this.ctx.fillRect(start.x, start.y, w, h);
                 }
-                this.ctx.strokeRect(start.x, start.y, rectWidth, rectHeight);
+                this.ctx.strokeRect(start.x, start.y, w, h);
                 break;
-
-            case 'circle':
-                const radius = Math.sqrt(
-                    Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
-                );
+            }
+            case 'circle': {
+                const radius = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+                this.ctx.beginPath();
                 this.ctx.arc(start.x, start.y, radius, 0, Math.PI * 2);
-                if (fill) {
-                    this.ctx.fillStyle = fill;
-                    this.ctx.fill();
-                }
-                this.ctx.stroke();
+                applyFillAndStroke();
                 break;
-
-            case 'triangle':
-                // Draw equilateral-ish triangle from start to end
+            }
+            case 'triangle': {
                 const midX = (start.x + end.x) / 2;
-                this.ctx.moveTo(midX, start.y); // Top
-                this.ctx.lineTo(end.x, end.y); // Bottom right
-                this.ctx.lineTo(start.x, end.y); // Bottom left
+                this.ctx.beginPath();
+                this.ctx.moveTo(midX, start.y);
+                this.ctx.lineTo(end.x, end.y);
+                this.ctx.lineTo(start.x, end.y);
                 this.ctx.closePath();
-                if (fill) {
-                    this.ctx.fillStyle = fill;
-                    this.ctx.fill();
-                }
-                this.ctx.stroke();
+                applyFillAndStroke();
                 break;
-
-            case 'diamond':
-                // Draw diamond from start to end
+            }
+            case 'diamond': {
                 const centerX = (start.x + end.x) / 2;
                 const centerY = (start.y + end.y) / 2;
-                this.ctx.moveTo(centerX, start.y); // Top
-                this.ctx.lineTo(end.x, centerY); // Right
-                this.ctx.lineTo(centerX, end.y); // Bottom
-                this.ctx.lineTo(start.x, centerY); // Left
+                this.ctx.beginPath();
+                this.ctx.moveTo(centerX, start.y);
+                this.ctx.lineTo(end.x, centerY);
+                this.ctx.lineTo(centerX, end.y);
+                this.ctx.lineTo(start.x, centerY);
                 this.ctx.closePath();
-                if (fill) {
-                    this.ctx.fillStyle = fill;
-                    this.ctx.fill();
-                }
+                applyFillAndStroke();
+                break;
+            }
+            case 'line': {
+                this.ctx.beginPath();
+                this.ctx.moveTo(start.x, start.y);
+                this.ctx.lineTo(end.x, end.y);
                 this.ctx.stroke();
                 break;
+            }
         }
     }
 
@@ -234,17 +266,26 @@ class CanvasService {
         this.ctx.fillText(text, point.x, point.y);
     }
 
+    private currentBatchColor: string | undefined; // Added for batching color
+
     // Batch and send draw command
-    public sendDrawCommand(command: number[]): void {
+    public sendDrawCommand(command: number[], color?: string): void {
         this.batchedCommands.push(command);
+
+        // Store current color for this batch
+        if (color && !this.currentBatchColor) {
+            this.currentBatchColor = color;
+        }
 
         if (this.batchTimeout === null) {
             this.batchTimeout = window.setTimeout(() => {
                 if (this.batchedCommands.length > 0) {
                     socketService.emit(SocketEvents.DRAW_STROKE, {
                         commands: this.batchedCommands,
+                        color: this.currentBatchColor, // Send actual color for custom colors
                     });
                     this.batchedCommands = [];
+                    this.currentBatchColor = undefined;
                 }
                 this.batchTimeout = null;
             }, this.BATCH_DELAY);

@@ -11,8 +11,6 @@ interface CanvasState {
 
     // Canvas state
     isDrawing: boolean;
-    canvasWidth: number;
-    canvasHeight: number;
 
     // Remote cursors
     remoteCursors: Map<string, UserCursor>;
@@ -24,7 +22,6 @@ interface CanvasState {
     setStrokeWidth: (width: number) => void;
     setFillColor: (color: string | null) => void;
     setIsDrawing: (drawing: boolean) => void;
-    setCanvasSize: (width: number, height: number) => void;
     updateRemoteCursor: (cursor: UserCursor) => void;
     removeRemoteCursor: (sessionId: string) => void;
     clearRemoteCursors: () => void;
@@ -37,8 +34,6 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     strokeWidth: STROKE_WIDTHS[1],
     fillColor: null,
     isDrawing: false,
-    canvasWidth: 1920,
-    canvasHeight: 1080,
     remoteCursors: new Map(),
 
     setCurrentTool: (currentTool) => set({ currentTool }),
@@ -52,8 +47,6 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     setFillColor: (fillColor) => set({ fillColor }),
 
     setIsDrawing: (isDrawing) => set({ isDrawing }),
-
-    setCanvasSize: (canvasWidth, canvasHeight) => set({ canvasWidth, canvasHeight }),
 
     updateRemoteCursor: (cursor) => set((state) => {
         const newCursors = new Map(state.remoteCursors);
