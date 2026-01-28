@@ -1,6 +1,6 @@
 import { StyledSlider } from '../ui/StyledSlider';
 
-// Preset stroke sizes
+// preset stroke sizes
 const STROKE_PRESETS = [4, 8, 12, 20, 32];
 
 interface BrushSettingsProps {
@@ -8,10 +8,8 @@ interface BrushSettingsProps {
     setStrokeWidth: (width: number) => void;
 }
 
-/**
- * Brush stroke size settings popover content
- * Extracted from Toolbar for better modularity
- */
+// brush stroke size settings popover content
+// extracted from toolbar for better modularity
 export function BrushSettingsContent({ strokeWidth, setStrokeWidth }: BrushSettingsProps) {
     return (
         <>

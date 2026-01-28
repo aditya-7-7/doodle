@@ -23,13 +23,13 @@ export default function LandingPage() {
 
     useEffect(() => { initialize(); }, []);
 
-    // Form field handlers
+    // form field handlers
     const updateField = (field: keyof typeof form) => (value: string) => {
         setForm(f => ({ ...f, [field]: value }));
         setError('');
     };
 
-    // Create room handler
+    // create room handler
     const handleCreateRoom = useCallback(() => {
         const { displayName, canvasName, password } = form;
 
@@ -72,7 +72,7 @@ export default function LandingPage() {
         });
     }, [form, isPrivate, setDisplayName, navigate]);
 
-    // Join room handler
+    // join room handler
     const handleJoinRoom = useCallback(() => {
         const { displayName, roomCode, joinPassword } = form;
 

@@ -13,12 +13,12 @@ interface ViewportContextValue {
 const ViewportContext = createContext<ViewportContextValue | null>(null);
 
 export function ViewportProvider({ children }: { children: ReactNode }) {
-    // Center the canvas in the viewport
-    // For canvas center to appear at viewport center:
-    // panX = viewportWidth/2 - canvasCenter
+    // center the canvas in the viewport
+    // for canvas center to appear at viewport center
+    // panx equals viewportwidth divided by 2 minus canvascenter
     const CANVAS_CENTER = CANVAS_SIZE / 2;
 
-    // Calculate initial pan based on window size
+    // calculate initial pan based on window size
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth * DEFAULT_VIEWPORT_WIDTH_RATIO : FALLBACK_VIEWPORT_WIDTH;
     const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : FALLBACK_VIEWPORT_HEIGHT;
 
@@ -35,7 +35,7 @@ export function ViewportProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const resetView = useCallback(() => {
-        // Recalculate center based on current window size
+        // recalculate center based on current window size
         const CANVAS_CENTER = CANVAS_SIZE / 2;
         const currentViewportWidth = typeof window !== 'undefined' ? window.innerWidth * DEFAULT_VIEWPORT_WIDTH_RATIO : FALLBACK_VIEWPORT_WIDTH;
         const currentViewportHeight = typeof window !== 'undefined' ? window.innerHeight : FALLBACK_VIEWPORT_HEIGHT;

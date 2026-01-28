@@ -1,11 +1,9 @@
-/**
- * Color Palette
- * Centralized color constants extracted from RoomHeader, Toolbar, and CanvasArea
- */
+// color palette
+// centralized color constants extracted from roomheader toolbar and canvasarea
 
-// Primary colors
+// primary colors
 export const colors = {
-    // Indigo/Purple (Primary brand color)
+    // indigo purple primary brand color
     indigo: {
         50: '#eef2ff',
         100: '#e0e7ff',
@@ -14,21 +12,21 @@ export const colors = {
         600: '#4f46e5',
     },
 
-    // Green (Success, public room)
+    // green success public room
     green: {
         50: '#f0fdf4',
         500: '#22c55e',
         600: '#16a34a',
     },
 
-    // Red (Danger, errors, leave)
+    // red danger errors leave
     red: {
         50: '#fef2f2',
         400: '#f87171',
         500: '#ef4444',
     },
 
-    // Gray (Neutral)
+    // gray neutral
     gray: {
         50: '#f9fafb',
         100: '#f3f4f6',
@@ -42,13 +40,13 @@ export const colors = {
         900: '#111827',
     },
 
-    // Base
+    // base
     white: '#ffffff',
     black: '#000000',
     transparent: 'transparent',
 } as const;
 
-// Gradients
+// gradients
 export const gradients = {
     primaryIndigo: 'linear-gradient(135deg, #818cf8, #6366f1)',
     primaryGreen: 'linear-gradient(135deg, #22c55e, #16a34a)',
@@ -56,35 +54,35 @@ export const gradients = {
     colorWheel: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
 } as const;
 
-// Semantic color names (mapped to palette)
+// semantic color names mapped to palette
 export const semanticColors = {
-    // Backgrounds
+    // backgrounds
     bgPrimary: colors.white,
     bgSecondary: colors.gray[50],
     bgTertiary: colors.gray[100],
 
-    // Text
+    // text
     textPrimary: colors.gray[800],
     textSecondary: colors.gray[600],
     textTertiary: colors.gray[500],
     textMuted: colors.gray[400],
 
-    // Borders
+    // borders
     borderLight: colors.gray[200],
     borderDefault: colors.gray[300],
 
-    // Interactive states
+    // interactive states
     hoverBg: colors.gray[100],
     activeBg: colors.indigo[100],
     activeText: colors.indigo[600],
 
-    // Status
+    // status
     success: colors.green[500],
     error: colors.red[500],
     warning: '#f59e0b',
     info: colors.indigo[500],
 
-    // Connection status
+    // connection status
     connected: colors.green[500],
     disconnected: colors.red[500],
 } as const;

@@ -6,13 +6,8 @@ interface UseCopyToClipboardReturn {
     copyToClipboard: (text: string) => Promise<boolean>;
 }
 
-/**
- * Reusable hook for copying text to clipboard
- * Used in RoomPage (share link) and PrivacyPopover (password copy)
- * 
- * @param feedbackDuration - How long to show "copied" state (default: 2000ms)
- * @returns { copied, copyToClipboard }
- */
+// reusable hook for copying text to clipboard
+// used in roompage share link and privacypopover password copy
 export function useCopyToClipboard(feedbackDuration = timing.copyFeedback): UseCopyToClipboardReturn {
     const [copied, setCopied] = useState(false);
 
@@ -21,7 +16,7 @@ export function useCopyToClipboard(feedbackDuration = timing.copyFeedback): UseC
             await navigator.clipboard.writeText(text);
             setCopied(true);
 
-            // Reset after feedback duration
+            // reset after feedback duration
             setTimeout(() => setCopied(false), feedbackDuration);
             return true;
         } catch (error) {

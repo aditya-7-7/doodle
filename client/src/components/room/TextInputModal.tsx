@@ -13,10 +13,8 @@ interface TextInputModalProps {
     panY: number;
 }
 
-/**
- * Text Input Modal
- * Extracted from CanvasArea for better modularity
- */
+// text input modal
+// extracted from CanvasArea for better modularity
 export function TextInputModal({
     position,
     value,
@@ -29,18 +27,18 @@ export function TextInputModal({
 }: TextInputModalProps) {
     if (!position) return null;
 
-    // Convert normalized canvas coordinates (0-1) to screen pixel position
+    // convert normalized canvas coordinates 0 to 1 to screen pixel position
     const CANVAS_SIZE = 8000;
     const canvasX = position.x * CANVAS_SIZE;
     const canvasY = position.y * CANVAS_SIZE;
     const screenX = canvasX * zoom + panX;
     const screenY = canvasY * zoom + panY;
 
-    // Modal dimensions
+    // modal dimensions
     const modalWidth = 250;
     const modalHeight = 50;
 
-    // Position above and centered on click point
+    // position above and centered on click point
     const left = screenX - modalWidth / 2;
     const top = screenY - modalHeight - 10; // 10px above click
 

@@ -7,7 +7,7 @@ import { TextInputModal } from './TextInputModal';
 import { ZoomControls } from './ZoomControls';
 
 interface CanvasAreaProps {
-    canvasRef: (node: HTMLCanvasElement | null) => void;  // Callback ref
+    canvasRef: (node: HTMLCanvasElement | null) => void;  // callback ref
     overlayCanvasRef: React.RefObject<HTMLCanvasElement>;
     containerRef: React.RefObject<HTMLDivElement>;
     onPointerDown: (e: React.PointerEvent) => void;
@@ -27,13 +27,13 @@ const styles = {
     cursorOffset: { transform: 'translate(-4px, -4px)' } as CSSProperties,
 };
 
-// Convert normalized canvas coordinates (0-1) to screen pixel position for cursors
+// convert normalized canvas coordinates 0 to 1 to screen pixel position for cursors
 const cursorPos = (x: number, y: number, zoom: number, panX: number, panY: number): CSSProperties => {
-    // Convert normalized (0-1) to canvas pixels
+    // convert normalized 0 to 1 to canvas pixels
     const canvasX = x * CANVAS_SIZE;
     const canvasY = y * CANVAS_SIZE;
 
-    // Apply viewport transform to get screen position
+    // apply viewport transform to get screen position
     const screenX = canvasX * zoom + panX;
     const screenY = canvasY * zoom + panY;
 
@@ -65,13 +65,13 @@ export function CanvasArea({
     const { remoteCursors } = useCanvasStore();
     const { zoom, panX, panY, setZoom, setPan, resetView } = useViewport();
 
-    // CSS transform for infinite canvas with zoom/pan
+    // css transform for infinite canvas with zoom and pan
     const canvasTransform = {
         transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
         transformOrigin: '0 0',
     };
 
-    // Cursor style - grabbing hand when panning
+    // cursor style uses grabbing hand when panning
     const cursorStyle = isPanning ? 'grabbing' : 'crosshair';
 
     return (

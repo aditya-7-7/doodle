@@ -19,7 +19,7 @@ interface RoomFormProps {
     error: string;
 }
 
-// Memoized input component
+// memoized input component
 const GradientInput = memo<React.InputHTMLAttributes<HTMLInputElement>>(props => (
     <div className="room-form-input-wrapper">
         <div className="room-form-input-glow animated-gradient-fast" />
@@ -27,11 +27,11 @@ const GradientInput = memo<React.InputHTMLAttributes<HTMLInputElement>>(props =>
     </div>
 ));
 
-// Constants
+// constants
 const PAD = 4, STRETCH = 8, COMPRESS = 5;
 const SLIDE_MS = 300, BOUNCE_MS = 150, SETTLE_MS = 150;
 
-// Pre-computed style objects
+// pre computed style objects
 const baseSlider = { position: 'absolute' as const, top: PAD, bottom: PAD };
 const idleTransition = 'all 0.35s cubic-bezier(0.4,0,0.2,1)';
 const slideTransition = 'all 0.4s ease-out';
@@ -115,10 +115,11 @@ export function RoomForm({
     }), [isJoin]);
 
     const passwordStyle = useMemo<React.CSSProperties>(() => ({
-        maxHeight: isPrivate ? 60 : 0,
+        maxHeight: isPrivate ? 70 : 0,
         opacity: isPrivate ? 1 : 0,
-        overflow: 'hidden',
+        overflow: isPrivate ? 'visible' : 'hidden',
         transition: passwordTransition,
+        paddingBottom: isPrivate ? 4 : 0,
     }), [isPrivate]);
 
     const btnClass = `room-form-btn animated-gradient${isLoading ? ' opacity-60 cursor-not-allowed' : ''}`;
@@ -144,14 +145,14 @@ export function RoomForm({
                         <GradientInput placeholder="Display Name" value={displayName} onChange={e => onDisplayNameChange(e.target.value)} maxLength={50} />
                         <GradientInput placeholder="Canvas Name" value={canvasName} onChange={e => onCanvasNameChange(e.target.value)} maxLength={100} />
                         <div className="room-form-toggle-container">
-                            <span className={!isPrivate ? 'text-gray-800' : 'text-gray-400'}>Public</span>
+                            <span className={!isPrivate ? 'text-gray-600' : 'text-gray-400'}>Public</span>
                             <button type="button" className={`room-form-toggle-btn ${isPrivate ? 'animated-gradient' : 'bg-white'}`} onClick={() => onPrivateChange(!isPrivate)}>
                                 <span
                                     className="room-form-toggle-knob"
                                     style={{ left: isPrivate ? 26 : 2, backgroundColor: isPrivate ? '#fff' : '#9ca3af' }}
                                 />
                             </button>
-                            <span className={isPrivate ? 'text-gray-800' : 'text-gray-400'}>Private</span>
+                            <span className={isPrivate ? 'text-gray-600' : 'text-gray-400'}>Private</span>
                         </div>
                         <div style={passwordStyle}>
                             <GradientInput placeholder="Room Password" type="password" value={password} onChange={e => onPasswordChange(e.target.value)} />

@@ -1,17 +1,17 @@
 import { SocketEvents, ExtendedSocket } from '../types';
 import { drawService, webSocketService } from '../services';
 
-// Helper to request snapshot from one client in the room when needed
+// helper to request snapshot from one client in the room when needed
 const requestSnapshotIfNeeded = (socket: ExtendedSocket, needsSnapshot: boolean) => {
     if (needsSnapshot && socket.roomCode) {
-        // Send request to the socket that triggered the operation
+        // send request to the socket that triggered the operation
         webSocketService.sendToSocket(socket.id, SocketEvents.CANVAS_SNAPSHOT_REQUEST, {});
     }
 };
 
 export const registerDrawHandlers = (socket: ExtendedSocket): void => {
 
-    // Handle cursor movement - relay to others
+    // handle cursor movement and relay to others
     socket.on(SocketEvents.CURSOR_MOVE, (payload: { x: number, y: number, color: string }) => {
         if (!socket.roomCode || !socket.sessionId) return;
 

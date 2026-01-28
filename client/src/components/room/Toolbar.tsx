@@ -18,7 +18,7 @@ interface ToolbarProps {
     setFontSize: (size: number) => void;
 }
 
-// Floating popover with position option
+// floating popover with position option
 const Popover = ({ show, onClose, children, position = 'top' }: { show: boolean; onClose: () => void; children: React.ReactNode; position?: 'top' | 'bottom' }) => {
     if (!show) return null;
     const positionClass = position === 'bottom' ? 'bottom-0' : 'top-0';
@@ -32,14 +32,14 @@ const Popover = ({ show, onClose, children, position = 'top' }: { show: boolean;
     );
 };
 
-// Divider - thin horizontal line separator
+// divider thin horizontal line separator
 const Divider = () => <hr className="w-[70%] h-0 border-0 border-t border-gray-200 m-0 p-0" />;
 
-// ToolButton component
+// tool button component
 const ToolButton = ({ children, active, onClick, title, variant = 'default' }: {
     children: React.ReactNode; active?: boolean; onClick: () => void; title: string; variant?: 'default' | 'indigo' | 'red';
 }) => {
-    const baseClasses = "w-[30px] h-[30px] min-w-[30px] min-h-[30px] max-w-[30px] max-h-[30px] rounded-md flex items-center justify-center border-none cursor-pointer transition-colors shrink-0";
+    const baseClasses = "w-9 h-9 min-w-9 min-h-9 md:w-[30px] md:h-[30px] md:min-w-[30px] md:min-h-[30px] rounded-md flex items-center justify-center border-none cursor-pointer transition-colors shrink-0";
 
     let stateClasses = "bg-transparent text-gray-600";
     if (active) {
@@ -59,10 +59,10 @@ const ToolButton = ({ children, active, onClick, title, variant = 'default' }: {
     );
 };
 
-// Color button
+// color button
 const ColorButton = ({ color, selected, onClick }: { color: string; selected: boolean; onClick: () => void }) => (
     <button
-        className={`w-[22px] h-[22px] min-w-[22px] min-h-[22px] max-w-[22px] max-h-[22px] aspect-square rounded-full shadow cursor-pointer transition-transform shrink-0 ${selected ? 'ring-2 ring-indigo-500 scale-110' : 'ring-2 ring-white hover:scale-110'
+        className={`w-7 h-7 min-w-7 min-h-7 md:w-[22px] md:h-[22px] md:min-w-[22px] md:min-h-[22px] aspect-square rounded-full shadow cursor-pointer transition-transform shrink-0 ${selected ? 'ring-2 ring-indigo-500 scale-110' : 'ring-2 ring-white hover:scale-110'
             }`}
         style={{ backgroundColor: color }}
         onClick={onClick}
@@ -78,28 +78,28 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
 
     const UndoRedoIcon = ({ icon: Icon, indicator: Indicator, color }: { icon: typeof Undo2; indicator: typeof User | typeof Globe; color?: string }) => (
         <div className="relative flex items-center justify-center">
-            <Icon className="w-4 h-4" />
-            <Indicator className="w-[7px] h-[7px] absolute -top-[3px] -right-[5px]" style={{ color: color || 'currentColor' }} />
+            <Icon className="w-5 h-5 md:w-4 md:h-4" />
+            <Indicator className="w-2 h-2 md:w-[7px] md:h-[7px] absolute -top-[3px] -right-[5px]" style={{ color: color || 'currentColor' }} />
         </div>
     );
 
     return (
-        <aside className="w-12 bg-white border-r border-gray-200 flex flex-col items-center py-2 gap-1.5">
+        <aside className="w-14 md:w-12 bg-white border-r border-gray-200 flex flex-col items-center py-2 gap-2 md:gap-1.5 landscape:max-h-[calc(100vh-3rem)] landscape:overflow-y-auto landscape:overflow-x-hidden">
             {/* Drawing Tools */}
             <ToolButton active={currentTool === 'brush'} onClick={() => setCurrentTool('brush')} title="Brush">
-                <Pencil className="w-4 h-4" />
+                <Pencil className="w-5 h-5 md:w-4 md:h-4" />
             </ToolButton>
             <ToolButton active={currentTool === 'eraser'} onClick={() => setCurrentTool('eraser')} title="Eraser">
-                <Eraser className="w-4 h-4" />
+                <Eraser className="w-5 h-5 md:w-4 md:h-4" />
             </ToolButton>
             <ToolButton active={currentTool === 'line'} onClick={() => setCurrentTool('line')} title="Line">
-                <Minus className="w-4 h-4 -rotate-45" />
+                <Minus className="w-5 h-5 md:w-4 md:h-4 -rotate-45" />
             </ToolButton>
 
             {/* Shapes */}
             <div className="relative">
                 <ToolButton active={currentTool === 'shapes'} onClick={() => { setCurrentTool('shapes'); togglePopover('shapes'); }} title="Shapes">
-                    <Square className="w-4 h-4" />
+                    <Square className="w-5 h-5 md:w-4 md:h-4" />
                 </ToolButton>
                 <Popover show={activePopover === 'shapes'} onClose={closePopover}>
                     <ShapeSettingsContent
@@ -114,7 +114,7 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
             {/* Text */}
             <div className="relative">
                 <ToolButton active={currentTool === 'text'} onClick={() => { setCurrentTool('text'); togglePopover('text'); }} title="Text">
-                    <Type className="w-4 h-4" />
+                    <Type className="w-5 h-5 md:w-4 md:h-4" />
                 </ToolButton>
                 <Popover show={activePopover === 'text'} onClose={closePopover}>
                     <TextSettingsContent fontSize={fontSize} setFontSize={setFontSize} />
@@ -145,7 +145,7 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
 
             {/* Clear */}
             <ToolButton onClick={onClear} title="Clear Canvas" variant="red">
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-5 h-5 md:w-4 md:h-4" />
             </ToolButton>
 
             <Divider />
@@ -154,7 +154,7 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
             <div className="relative flex flex-col items-center gap-0.5">
                 <button
                     onClick={() => togglePopover('stroke')}
-                    className="w-[26px] h-[26px] min-w-[26px] min-h-[26px] rounded-full border border-gray-300 bg-white cursor-pointer flex items-center justify-center"
+                    className="w-8 h-8 min-w-8 min-h-8 md:w-[26px] md:h-[26px] md:min-w-[26px] md:min-h-[26px] rounded-full border border-gray-300 bg-white cursor-pointer flex items-center justify-center"
                     title={`Stroke: ${strokeWidth}px`}
                 >
                     <div

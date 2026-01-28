@@ -14,10 +14,8 @@ interface UsePanningReturn {
     handlePanEnd: () => void;
 }
 
-/**
- * Hook for canvas panning with middle mouse button
- * Extracted from useCanvasDrawing for better modularity
- */
+// hook for canvas panning with middle mouse button or touch
+// extracted from useCanvasDrawing for better modularity
 export function usePanning({ panX, panY, setPan }: UsePanningProps): UsePanningReturn {
     const [isPanning, setIsPanning] = useState(false);
     const [panStartMouse, setPanStartMouse] = useState<{ x: number; y: number } | null>(null);
@@ -32,7 +30,7 @@ export function usePanning({ panX, panY, setPan }: UsePanningProps): UsePanningR
     const handlePanMove = useCallback((clientX: number, clientY: number, isMiddleButtonPressed: boolean): boolean => {
         if (!isPanning || !panStartMouse || !panStartPos) return false;
 
-        // Check if middle button is still pressed
+        // check if middle button is still pressed
         if (!isMiddleButtonPressed) {
             setIsPanning(false);
             setPanStartMouse(null);

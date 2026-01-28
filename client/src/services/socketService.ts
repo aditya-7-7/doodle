@@ -52,21 +52,21 @@ class SocketService {
         return this.isConnected && this.socket?.connected === true;
     }
 
-    // Emit event
+    // emit event
     public emit(event: SocketEvents | string, data?: any): void {
         if (this.socket) {
             this.socket.emit(event, data);
         }
     }
 
-    // Listen to event
+    // listen to event
     public on(event: SocketEvents | string, callback: (data: any) => void): void {
         if (this.socket) {
             this.socket.on(event, callback);
         }
     }
 
-    // Remove listener
+    // remove listener
     public off(event: SocketEvents | string, callback?: (data: any) => void): void {
         if (this.socket) {
             if (callback) {
@@ -77,7 +77,7 @@ class SocketService {
         }
     }
 
-    // One-time listener
+    // one time listener
     public once(event: SocketEvents | string, callback: (data: any) => void): void {
         if (this.socket) {
             this.socket.once(event, callback);

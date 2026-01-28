@@ -5,8 +5,8 @@ export interface RoomDocument extends Omit<IRoom, '_id'>, Document { }
 
 const RoomSettingsSchema = new Schema<RoomSettings>({
     isPrivate: { type: Boolean, default: false },
-    password: { type: String, default: null },  // Hashed
-    passwordPlain: { type: String, default: null },  // Plain for admin
+    password: { type: String, default: null },  // hashed
+    passwordPlain: { type: String, default: null },  // plain for admin
     canvasWidth: { type: Number, default: 8000 },
     canvasHeight: { type: Number, default: 8000 },
     maxUsers: { type: Number, default: 10 },
@@ -30,7 +30,7 @@ const RoomSchema = new Schema<RoomDocument>({
     },
     creatorUserId: {
         type: String,
-        default: null  // For future OAuth
+        default: null  // for future oauth
     },
     settings: {
         type: RoomSettingsSchema,
@@ -40,7 +40,7 @@ const RoomSchema = new Schema<RoomDocument>({
     timestamps: true
 });
 
-// Generate unique room code
+// generate unique room code
 RoomSchema.statics.generateCode = function (): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';

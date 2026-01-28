@@ -15,10 +15,8 @@ interface UseShapeDrawingReturn {
     drawLinePreview: (startX: number, startY: number, endX: number, endY: number) => void;
 }
 
-/**
- * Hook for shape and line drawing previews on overlay canvas
- * Extracted from useCanvasDrawing for better modularity
- */
+// hook for shape and line drawing previews on overlay canvas
+// extracted from useCanvasDrawing for better modularity
 export function useShapeDrawing({
     overlayCanvasRef,
     strokeColor,

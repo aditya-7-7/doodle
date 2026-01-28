@@ -1,9 +1,7 @@
-/**
- * Spacing & Sizing Constants
- * Centralized dimension values extracted from components
- */
+// spacing and sizing constants
+// centralized dimension values extracted from components
 
-// Spacing scale (based on 4px grid)
+// spacing scale based on 4px grid
 export const spacing = {
     0: 0,
     1: 4,
@@ -18,7 +16,7 @@ export const spacing = {
     16: 64,
 } as const;
 
-// Border radius
+// border radius
 export const radius = {
     sm: 4,
     md: 6,
@@ -27,36 +25,36 @@ export const radius = {
     full: 9999,
 } as const;
 
-// Component sizes
+// component sizes
 export const sizes = {
-    // Toolbar
+    // toolbar
     toolButton: 30,
     toolButtonRadius: 6,
     colorButton: 22,
     sidebar: 48,
 
-    // Icons
+    // icons
     iconSm: 12,
     iconMd: 16,
     iconLg: 20,
     iconXl: 24,
 
-    // Inputs
+    // inputs
     inputHeight: 40,
     buttonHeight: 40,
 
-    // Popovers
+    // popovers
     popoverMinWidth: 200,
     popoverPadding: 16,
 
-    // Logo
+    // logo
     logoHeight: 48,
 
-    // Zoom controls
+    // zoom controls
     zoomButton: 40,
 } as const;
 
-// Z-index scale
+// z index scale
 export const zIndex = {
     base: 0,
     dropdown: 10,
@@ -66,7 +64,7 @@ export const zIndex = {
     tooltip: 60,
 } as const;
 
-// Typography
+// typography
 export const fontSize = {
     xs: 11,
     sm: 12,
@@ -83,7 +81,7 @@ export const fontWeight = {
     bold: 700,
 } as const;
 
-// Timing
+// timing
 export const timing = {
     fast: 150,
     normal: 200,
@@ -91,14 +89,14 @@ export const timing = {
     copyFeedback: 2000,
 } as const;
 
-// Shadow
+// shadow
 export const shadow = {
     sm: '0 1px 3px rgba(0,0,0,0.15)',
     md: '0 2px 8px rgba(0,0,0,0.15)',
     lg: '0 10px 25px rgba(0,0,0,0.15)',
     xl: '0 10px 40px rgba(0,0,0,0.15)',
 
-    // Color-specific shadows
+    // color specific shadows
     indigo: '0 2px 8px rgba(99, 102, 241, 0.3)',
     indigoHover: '0 4px 12px rgba(99, 102, 241, 0.4)',
     green: '0 2px 8px rgba(34, 197, 94, 0.3)',

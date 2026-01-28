@@ -8,7 +8,7 @@ interface ShapeSettingsProps {
     setFillColor: (color: string | null) => void;
 }
 
-// Only shapes that appear in the shape picker (not 'line' - that's a separate tool)
+// shapes in the shape tool
 type PickerShapeType = Exclude<ShapeType, 'line'>;
 const SHAPE_TYPES: PickerShapeType[] = ['rect', 'circle', 'triangle', 'diamond'];
 const SHAPE_ICONS: Record<PickerShapeType, React.ElementType> = {
@@ -18,14 +18,12 @@ const SHAPE_ICONS: Record<PickerShapeType, React.ElementType> = {
     diamond: Diamond,
 };
 
-/**
- * Shape settings popover content - shape type and fill color
- * Extracted from Toolbar for better modularity
- */
+// shape settings popover content (shape type and fill color)
+// extracted from Toolbar for better modularity
 export function ShapeSettingsContent({ currentShape, setCurrentShape, fillColor, setFillColor }: ShapeSettingsProps) {
     return (
         <>
-            {/* Shape Type */}
+            {/* shape type */}
             <div className="text-sm text-gray-500 mb-2">
                 Shape Type
             </div>

@@ -20,13 +20,8 @@ interface UseZoomControlsReturn {
     handleWheelZoom: (deltaY: number, clientX: number, clientY: number) => void;
 }
 
-/**
- * Reusable hook for zoom and pan controls
- * Extracts zoom logic for use in ZoomControls and other components
- * 
- * @param props - Zoom state and setters
- * @returns Zoom handler functions
- */
+// reusable hook for zoom and pan controls
+// extracts zoom logic for use in zoomcontrols and other components
 export function useZoomControls({
     zoom,
     panX,
@@ -75,7 +70,7 @@ export function useZoomControls({
             y: clientY - rect.top,
         };
 
-        // Zoom in for negative delta (scroll up), zoom out for positive
+        // zoom in for negative delta scroll up zoom out for positive
         const zoomDelta = deltaY < 0 ? zoomStep : -zoomStep;
         const newZoom = clampZoom(zoom + zoomDelta, zoomMin, zoomMax);
 

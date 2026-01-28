@@ -7,12 +7,12 @@ class CanvasService {
     private canvas: HTMLCanvasElement | null = null;
     private ctx: CanvasRenderingContext2D | null = null;
 
-    // Batching for network efficiency
+    // batching commands for network efficiency
     private batchedCommands: number[][] = [];
     private batchTimeout: number | null = null;
-    private readonly BATCH_DELAY = 50; // ms
+    private readonly BATCH_DELAY = 50; // milliseconds
 
-    // Pending operations queue - for when canvas isn't ready yet
+    // queue for operations when canvas isnt ready yet
     private pendingCallbacks: (() => void)[] = [];
     private isReady = false;
 
@@ -25,7 +25,7 @@ class CanvasService {
         return CanvasService.instance;
     }
 
-    // Initialize canvas
+    // set up the canvas element
     public setCanvas(canvas: HTMLCanvasElement): void {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
@@ -34,14 +34,14 @@ class CanvasService {
             this.ctx.lineJoin = 'round';
         }
         this.isReady = true;
-        // Execute any pending callbacks
+        // run any callbacks that were waiting for canvas to be ready
         while (this.pendingCallbacks.length > 0) {
             const cb = this.pendingCallbacks.shift();
             cb?.();
         }
     }
 
-    // Queue callback for when canvas is ready, or execute immediately if ready
+    // run callback when canvas is ready or queue it for later
     public whenReady(callback: () => void): void {
         if (this.isReady && this.canvas && this.ctx) {
             callback();
@@ -50,7 +50,7 @@ class CanvasService {
         }
     }
 
-    // Reset state (call when leaving a room)
+    // clean up when leaving a room
     public reset(): void {
         this.canvas = null;
         this.ctx = null;
@@ -71,24 +71,24 @@ class CanvasService {
         return this.ctx;
     }
 
-    // Get scale factor - always 1 since we use fixed resolution with CSS scaling
+    // scale factor is always 1 since we use fixed resolution with css scaling
     public getScaleFactor(): number {
         return 1;
     }
 
-    // Convert screen pixel to normalized coordinates (0-1) accounting for zoom/pan
-    // Fixed canvas is 8000x8000
-    // containerRect should be from the parent container, NOT the transformed canvas
+    // convert screen pixel to normalized 0 to 1 coordinates accounting for zoom and pan
+    // fixed canvas is 8000x8000
+    // container rect should be from the parent container not the transformed canvas
     public normalizePoint(x: number, y: number, zoom: number = 1, panX: number = 0, panY: number = 0, containerRect?: DOMRect): Point {
         if (!this.canvas) return { x: 0, y: 0 };
 
-        // Use container rect if provided, otherwise fall back to canvas rect
-        // Container rect is needed because canvas.getBoundingClientRect() includes CSS transforms
+        // use container rect if provided otherwise fall back to canvas rect
+        // container rect is needed because canvas getboundingclientrect includes css transforms
         const rect = containerRect || this.canvas.getBoundingClientRect();
 
-        // Reverse the viewport transform: screen → canvas → normalized
-        // Canvas transform is: translate(panX, panY) scale(zoom)
-        // So reverse: (screen - rect.left - panX) / zoom
+        // reverse the viewport transform screen to canvas to normalized
+        // canvas transform is translate panx pany scale zoom
+        // so reverse is screen minus rect left minus panx divided by zoom
         const canvasX = (x - rect.left - panX) / zoom;
         const canvasY = (y - rect.top - panY) / zoom;
 
@@ -98,7 +98,7 @@ class CanvasService {
         };
     }
 
-    // Convert normalized to canvas pixel coordinates (using constants)
+    // convert normalized to canvas pixel coordinates
     public denormalizePoint(x: number, y: number): Point {
         return {
             x: x * CANVAS_WIDTH,
@@ -106,7 +106,7 @@ class CanvasService {
         };
     }
 
-    // Draw a line segment (normalized coords)
+    // draw a line segment using normalized coords
     public drawLine(
         startX: number,
         startY: number,
@@ -117,11 +117,11 @@ class CanvasService {
     ): void {
         if (!this.ctx || !this.canvas) return;
 
-        // Denormalize
+        // denormalize
         const start = this.denormalizePoint(startX, startY);
         const end = this.denormalizePoint(endX, endY);
 
-        // Scale width for display
+        // scale width for display
         const scaledWidth = width * this.getScaleFactor();
 
         this.ctx.beginPath();
@@ -132,7 +132,7 @@ class CanvasService {
         this.ctx.stroke();
     }
 
-    // Erase at position (normalized coords) - circular eraser
+    // erase at position using normalized coords with circular eraser
     public erase(x: number, y: number, size: number = 20): void {
         if (!this.ctx || !this.canvas) return;
 
@@ -145,7 +145,7 @@ class CanvasService {
         this.ctx.fill();
     }
 
-    // Erase line between two points (for smooth continuous erasing)
+    // erase a line between two points for smooth continuous erasing
     public eraseLine(x1: number, y1: number, x2: number, y2: number, size: number = 20): void {
         if (!this.ctx || !this.canvas) return;
 
@@ -163,14 +163,14 @@ class CanvasService {
         this.ctx.stroke();
     }
 
-    // Clear entire canvas
+    // clear the entire canvas to white
     public clear(): void {
         if (!this.ctx || !this.canvas) return;
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    // Draw shape (normalized coords)
+    // draw a shape using normalized coords
     public drawShape(
         type: 'rect' | 'circle' | 'line' | 'triangle' | 'diamond',
         startX: number,
@@ -190,7 +190,7 @@ class CanvasService {
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = scaledWidth;
 
-        // Helper to apply fill and stroke
+        // helper to apply fill and stroke
         const applyFillAndStroke = () => {
             if (fill) {
                 this.ctx!.fillStyle = fill;
@@ -249,7 +249,7 @@ class CanvasService {
         }
     }
 
-    // Draw text (normalized coords)
+    // draw text using normalized coords
     public drawText(
         text: string,
         x: number,
@@ -266,13 +266,13 @@ class CanvasService {
         this.ctx.fillText(text, point.x, point.y);
     }
 
-    private currentBatchColor: string | undefined; // Added for batching color
+    private currentBatchColor: string | undefined; // for batching color
 
-    // Batch and send draw command
+    // batch and send draw command over network
     public sendDrawCommand(command: number[], color?: string): void {
         this.batchedCommands.push(command);
 
-        // Store current color for this batch
+        // store current color for this batch
         if (color && !this.currentBatchColor) {
             this.currentBatchColor = color;
         }
@@ -282,7 +282,7 @@ class CanvasService {
                 if (this.batchedCommands.length > 0) {
                     socketService.emit(SocketEvents.DRAW_STROKE, {
                         commands: this.batchedCommands,
-                        color: this.currentBatchColor, // Send actual color for custom colors
+                        color: this.currentBatchColor, // send actual color for custom colors
                     });
                     this.batchedCommands = [];
                     this.currentBatchColor = undefined;
@@ -292,12 +292,12 @@ class CanvasService {
         }
     }
 
-    // Get canvas as data URL (for snapshots)
+    // get canvas as data url for snapshots
     public toDataURL(): string | null {
         return this.canvas?.toDataURL('image/png') || null;
     }
 
-    // Load image onto canvas
+    // load an image onto the canvas
     public loadImage(dataUrl: string): Promise<void> {
         return new Promise((resolve, reject) => {
             if (!this.ctx || !this.canvas) {

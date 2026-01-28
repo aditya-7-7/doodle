@@ -5,10 +5,9 @@ interface StyledSliderProps {
     max: number;
 }
 
-/**
- * Custom styled range slider with purple/indigo theme
- * Extracted for reuse across Toolbar popovers
- */
+
+// custom styled range slider with purple color
+// extracted for reuse across toolbar popovers
 export function StyledSlider({ value, onChange, min, max }: StyledSliderProps) {
     const percentage = ((value - min) / (max - min)) * 100;
 

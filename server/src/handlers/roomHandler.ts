@@ -2,10 +2,10 @@ import { Socket } from 'socket.io';
 import { SocketEvents, CreateRoomPayload, JoinRoomPayload, ExtendedSocket } from '../types';
 import { roomService, webSocketService, drawService } from '../services';
 
-// Simple in-memory rate limiter for room creation
+// simple in memory rate limiter for room creation
 const roomCreationAttempts = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_ROOM_CREATIONS = 5; // Max rooms per IP per window
+const MAX_ROOM_CREATIONS = 5; // max rooms per ip per window
 
 function isRateLimited(ip: string): boolean {
     const now = Date.now();

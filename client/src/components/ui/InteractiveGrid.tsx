@@ -2,7 +2,7 @@
 import React, { useState, useEffect, CSSProperties } from "react";
 import { motion } from "motion/react";
 
-// Typed style constants
+// typed style constants
 const fadeGradient: CSSProperties = { background: "radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(255,255,255,0.5) 80%, white 95%)" };
 const gridStyle = (cols: number, rows: number, cellSize: number): CSSProperties => ({
     display: "grid",
@@ -14,7 +14,7 @@ const CELL_SIZE = 25;
 const COLORS = ["#93c5fd", "#f9a8d4", "#86efac", "#fde047", "#fca5a5", "#d8b4fe", "#a5b4fc", "#c4b5fd"];
 const randomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 
-// Grid cell with hover animation
+// grid cell with hover animation
 const Cell = React.memo(() => {
     const [hovered, setHovered] = useState(false);
     const [color, setColor] = useState("");
@@ -31,7 +31,7 @@ const Cell = React.memo(() => {
 });
 Cell.displayName = "Cell";
 
-// Main grid component
+// main grid component
 export const Boxes = React.memo(({ className }: { className?: string }) => {
     const [grid, setGrid] = useState({ cols: 0, rows: 0 });
 

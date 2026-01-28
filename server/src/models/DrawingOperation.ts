@@ -38,7 +38,7 @@ const DrawingOperationSchema = new Schema<DrawingOperationDocument>({
     },
 });
 
-// Compound index for ordering operations
+// compound index for ordering operations
 DrawingOperationSchema.index({ roomId: 1, sequenceNumber: -1 });
 DrawingOperationSchema.index({ roomId: 1, isUndone: 1, sequenceNumber: -1 });
 

@@ -14,10 +14,8 @@ interface ZoomControlsProps {
     zoomStep: number;
 }
 
-/**
- * Zoom Controls Panel
- * Extracted from CanvasArea, now using useZoomControls hook for logic
- */
+// zoom controls panel
+// extracted from CanvasArea, now using useZoomControls hook for logic
 export function ZoomControls({
     zoom,
     panX,
@@ -30,7 +28,7 @@ export function ZoomControls({
     zoomMax,
     zoomStep,
 }: ZoomControlsProps) {
-    // Use the zoom controls hook for zoom logic
+    // use the zoom controls hook for zoom logic
     const { handleZoomIn, handleZoomOut } = useZoomControls({
         zoom,
         panX,

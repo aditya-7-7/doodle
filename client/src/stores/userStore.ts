@@ -7,7 +7,7 @@ interface UserState {
     color: string;
     isAdmin: boolean;
 
-    // Actions
+    // actions
     setDisplayName: (name: string) => void;
     setColor: (color: string) => void;
     setIsAdmin: (isAdmin: boolean) => void;

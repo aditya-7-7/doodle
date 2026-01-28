@@ -1,5 +1,5 @@
-// Session service for managing local user identity
-// OAuth-ready: supports future userId alongside sessionId
+// session service for managing local user identity
+// oauth ready and supports future userid alongside sessionid
 
 const SESSION_ID_KEY = 'doodle_session_id';
 const DISPLAY_NAME_KEY = 'doodle_display_name';
@@ -23,35 +23,35 @@ class SessionService {
         return SessionService.instance;
     }
 
-    // Get or create session ID - uses sessionStorage for per-tab isolation
-    // This ensures each browser tab is treated as a separate user
+    // get or create session id uses sessionstorage for per tab isolation
+    // this ensures each browser tab is treated as a separate user
     public getSessionId(): string {
-        // First check sessionStorage (per-tab)
+        // first check sessionstorage per tab
         let sessionId = sessionStorage.getItem(SESSION_ID_KEY);
         if (!sessionId) {
-            // Generate new unique ID for this tab
+            // generate new unique id for this tab
             sessionId = crypto.randomUUID();
             sessionStorage.setItem(SESSION_ID_KEY, sessionId);
         }
         return sessionId;
     }
 
-    // Get display name
+    // get display name
     public getDisplayName(): string | null {
         return localStorage.getItem(DISPLAY_NAME_KEY);
     }
 
-    // Set display name
+    // set display name
     public setDisplayName(name: string): void {
         localStorage.setItem(DISPLAY_NAME_KEY, name);
     }
 
-    // Get identifier for server
+    // get identifier for server
     public getIdentifier(): { sessionId: string } {
         return { sessionId: this.getSessionId() };
     }
 
-    // Recent rooms management
+    // recent rooms management
     public getRecentRooms(): RecentRoom[] {
         const stored = localStorage.getItem(RECENT_ROOMS_KEY);
         if (!stored) return [];
@@ -65,17 +65,17 @@ class SessionService {
     public addRecentRoom(code: string, name: string): void {
         const rooms = this.getRecentRooms();
 
-        // Remove if exists
+        // remove if exists
         const filtered = rooms.filter(r => r.code !== code);
 
-        // Add to front
+        // add to front
         filtered.unshift({
             code,
             name,
             lastVisited: new Date().toISOString(),
         });
 
-        // Keep only last 10
+        // keep only last 10
         const trimmed = filtered.slice(0, 10);
 
         localStorage.setItem(RECENT_ROOMS_KEY, JSON.stringify(trimmed));

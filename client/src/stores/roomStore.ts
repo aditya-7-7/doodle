@@ -7,7 +7,7 @@ interface RoomState {
     isLoading: boolean;
     error: string | null;
 
-    // Actions
+    // actions
     setRoom: (room: Room | null) => void;
     setMembers: (members: RoomMember[]) => void;
     addMember: (member: RoomMember) => void;

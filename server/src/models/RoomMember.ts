@@ -3,7 +3,7 @@ import { RoomMember as IRoomMember } from '../types';
 
 export interface RoomMemberDocument extends Omit<IRoomMember, '_id'>, Document { }
 
-// Predefined colors for users
+// predefined colors for users
 const USER_COLORS = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
     '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
@@ -23,7 +23,7 @@ const RoomMemberSchema = new Schema<RoomMemberDocument>({
     },
     userId: {
         type: String,
-        default: null  // For future OAuth
+        default: null  // for future oauth
     },
     displayName: {
         type: String,
@@ -56,14 +56,14 @@ const RoomMemberSchema = new Schema<RoomMemberDocument>({
     },
 });
 
-// Compound index for unique member per room
+// compound index for unique member per room
 RoomMemberSchema.index({ roomId: 1, sessionId: 1 }, { unique: true });
 
-// Static method to get random color
+// static method to get random color
 RoomMemberSchema.statics.getRandomColor = function (existingColors: string[]): string {
     const availableColors = USER_COLORS.filter(c => !existingColors.includes(c));
     if (availableColors.length === 0) {
-        // If all colors used, generate random
+        // if all colors used generate random
         return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
     }
     return availableColors[Math.floor(Math.random() * availableColors.length)];

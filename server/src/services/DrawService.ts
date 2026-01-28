@@ -8,7 +8,7 @@ class DrawService {
     private readonly STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
 
     private constructor() {
-        // Periodic cleanup of stale room entries
+        // periodically clean up stale room entries
         setInterval(() => this.cleanupStaleEntries(), this.CLEANUP_INTERVAL_MS);
     }
 
@@ -28,14 +28,14 @@ class DrawService {
 
     public cleanupRoom(roomId: string): void { this.sequenceCounters.delete(roomId); }
 
-    // Get next sequence number for a room
+    // get next sequence number for a room
     public async getNextSequence(roomId: string): Promise<number> {
         const now = Date.now();
-        // Try from cache first
+        // try from cache first
         let entry = this.sequenceCounters.get(roomId);
 
         if (!entry) {
-            // Load from database
+            // load from database
             const lastOp = await DrawingOperation.findOne({ roomId }).sort({ sequenceNumber: -1 });
             entry = { seq: lastOp ? lastOp.sequenceNumber : 0, lastAccess: now };
         }
@@ -52,7 +52,7 @@ class DrawService {
         return { operation: operation.toObject(), needsSnapshot: sequenceNumber % 50 === 0 };
     }
 
-    // Get all non-undone operations for a room
+    // get all active operations for a room that havent been undone
     public async getOperations(roomId: string, sinceSequence: number = 0): Promise<any[]> {
         const operations = await DrawingOperation.find({
             roomId,
@@ -63,7 +63,7 @@ class DrawService {
         return operations.map(op => op.toObject());
     }
 
-    // Global Undo - undo last operation (any user)
+    // global undo undoes the last operation from any user
     public async undo(roomId: string): Promise<any | null> {
         const lastOp = await DrawingOperation.findOne({
             roomId,
@@ -78,13 +78,13 @@ class DrawService {
         return null;
     }
 
-    // Global Redo - redo the operation that was undone most recently
-    // (the one with lowest sequence number among undone ops - oldest undone = most recent undo)
+    // global redo redoes the operation that was undone most recently
+    // oldest undone equals most recent undo
     public async redo(roomId: string): Promise<any | null> {
         const oldestUndone = await DrawingOperation.findOne({
             roomId,
             isUndone: true,
-        }).sort({ sequenceNumber: 1 });  // Changed: ascending order to get oldest undone
+        }).sort({ sequenceNumber: 1 });  // ascending order to get oldest undone
 
         if (oldestUndone) {
             oldestUndone.isUndone = false;
@@ -94,7 +94,7 @@ class DrawService {
         return null;
     }
 
-    // Personal Undo - undo last operation by this specific user
+    // personal undo undoes last operation by this specific user only
     public async undoPersonal(roomId: string, sessionId: string): Promise<any | null> {
         const lastOp = await DrawingOperation.findOne({
             roomId,
@@ -110,13 +110,13 @@ class DrawService {
         return null;
     }
 
-    // Personal Redo - redo last undone operation by this specific user
+    // personal redo redoes last undone operation by this specific user
     public async redoPersonal(roomId: string, sessionId: string): Promise<any | null> {
         const oldestUndone = await DrawingOperation.findOne({
             roomId,
             sessionId,
             isUndone: true,
-        }).sort({ sequenceNumber: 1 });  // Oldest undone = most recently undone
+        }).sort({ sequenceNumber: 1 });  // oldest undone equals most recently undone
 
         if (oldestUndone) {
             oldestUndone.isUndone = false;
@@ -126,7 +126,7 @@ class DrawService {
         return null;
     }
 
-    // Save canvas snapshot
+    // save canvas snapshot for faster loading
     public async saveSnapshot(roomId: string, imageData: string): Promise<void> {
         const entry = this.sequenceCounters.get(roomId);
         const seq = entry?.seq || 0;
@@ -137,24 +137,24 @@ class DrawService {
             sequenceNumber: seq,
         });
 
-        // Keep only last 5 snapshots
+        // keep only last 5 snapshots
         const snapshots = await CanvasSnapshot.find({ roomId }).sort({ createdAt: -1 }).skip(5);
         for (const old of snapshots) {
             await old.deleteOne();
         }
     }
 
-    // Get latest snapshot
+    // get the latest snapshot for a room
     public async getLatestSnapshot(roomId: string): Promise<any | null> {
         const snapshot = await CanvasSnapshot.findOne({ roomId }).sort({ createdAt: -1 });
         return snapshot?.toObject() || null;
     }
 
-    // Clear all operations (for clear canvas)
+    // clear all operations by adding a clear operation to history
     public async clearOperations(roomId: string, sessionId: string): Promise<number> {
         const seq = await this.getNextSequence(roomId);
 
-        // Add clear operation to history
+        // add clear operation to history
         await DrawingOperation.create({
             roomId,
             sessionId,

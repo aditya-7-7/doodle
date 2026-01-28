@@ -12,15 +12,15 @@ export default function RoomPage() {
     const { room, members } = useRoomStore();
     const { sessionId } = useUserStore();
 
-    // Custom hooks for socket and drawing logic
+    // custom hooks for socket and drawing logic
     const { isConnected, fps, latency, showJoinForm, joinName, setJoinName, joinPassword, setJoinPassword, joinError, handleJoinSubmit } = useRoomSocket(roomCode);
     const { canvasRef, overlayCanvasRef, containerRef, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel, textPosition, setTextPosition, textInput, setTextInput, handleTextSubmit, fillColor, setFillColor, fontSize, setFontSize, isPanning } = useCanvasDrawing();
 
-    // Get current user's admin status
+    // get current users admin status
     const currentMember = members.find(m => m.sessionId === sessionId);
     const isAdmin = currentMember?.isAdmin || false;
 
-    // Action handlers
+    // action handlers
     const handleUndo = useCallback(() => socketService.emit(SocketEvents.HISTORY_UNDO), []);
     const handleRedo = useCallback(() => socketService.emit(SocketEvents.HISTORY_REDO), []);
     const handleUndoPersonal = useCallback(() => socketService.emit(SocketEvents.HISTORY_UNDO_PERSONAL), []);
@@ -57,7 +57,7 @@ export default function RoomPage() {
         if (confirm('Leave this room?')) navigate('/');
     }, [navigate]);
 
-    // Show join form for users opening shared links
+    // show join form for users opening shared links
     if (showJoinForm) {
         return (
             <JoinRoomModal

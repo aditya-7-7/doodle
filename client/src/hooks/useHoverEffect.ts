@@ -19,18 +19,12 @@ interface HoverEffectReturn {
     hoverStyles: CSSProperties;
 }
 
-/**
- * Reusable hover effect hook
- * Eliminates repeated onMouseEnter/onMouseLeave handlers
- * 
- * @example
- * const { hoverProps, hoverStyles } = useHoverEffect('lift');
- * <button {...hoverProps} style={{ ...baseStyles, ...hoverStyles }}>
- */
+// reusable hover effect hook
+// eliminates repeated onmouseenter onmouseleave handlers
 export function useHoverEffect(options: HoverEffectType | HoverEffectOptions = 'none'): HoverEffectReturn {
     const [isHovered, setIsHovered] = useState(false);
 
-    // Normalize options
+    // normalize options
     const opts: HoverEffectOptions = typeof options === 'string'
         ? { type: options }
         : options;
@@ -75,7 +69,7 @@ export function useHoverEffect(options: HoverEffectType | HoverEffectOptions = '
                 break;
         }
     } else {
-        // Reset styles when not hovered
+        // reset styles when not hovered
         switch (type) {
             case 'lift':
                 hoverStyles = {

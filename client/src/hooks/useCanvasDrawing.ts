@@ -34,7 +34,12 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
     const shapeStartRef = useRef<{ x: number; y: number } | null>(null);
     const strokePointsRef = useRef<number[][]>([]);
 
-    // Canvas callback ref
+    // refs for touch based panning
+    const touchHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+    const isTouchPanningRef = useRef(false);
+
+    // callback ref for canvas element
     const canvasRef = useCallback((node: HTMLCanvasElement | null) => {
         canvasNodeRef.current = node;
         if (node) {
@@ -43,12 +48,12 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
         }
     }, []);
 
-    // Store access
+    // get stuff from stores
     const { currentTool, currentShape, strokeColor, strokeWidth, setIsDrawing, isDrawing } = useCanvasStore();
     const { color } = useUserStore();
     const { zoom, panX, panY, setPan } = useViewport();
 
-    // Local state
+    // local state for text tool and fill color
     const [textPosition, setTextPositionState] = useState<{ x: number; y: number } | null>(null);
     const [textInput, setTextInputState] = useState('');
     const [fillColor, setFillColorState] = useState<string | null>(null);
@@ -59,7 +64,7 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
     const setFillColor = useCallback((c: string | null) => setFillColorState(c), []);
     const setFontSize = useCallback((size: number) => setFontSizeState(size), []);
 
-    // Use extracted hooks
+    // use the extracted hooks for shapes and panning
     const { clearOverlay, drawShapePreview, drawLinePreview } = useShapeDrawing({
         overlayCanvasRef,
         strokeColor,
@@ -73,20 +78,43 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
         setPan,
     });
 
-    // Pointer Down Handler
+    // handles when finger or mouse goes down
     const handlePointerDown = useCallback((e: React.PointerEvent) => {
-        if (e.button === 2) return; // Ignore right-click
+        if (e.button === 2) return; // ignore right click
 
-        // Middle mouse panning
+        // middle mouse button pans on desktop
         if (e.button === 1) {
             e.preventDefault();
             handlePanStart(e.clientX, e.clientY);
             return;
         }
 
-        if (e.button !== 0) return; // Only left button
+        if (e.button !== 0) return; // only handle left click
 
         const point = canvasService.normalizePoint(e.clientX, e.clientY, zoom, panX, panY, containerRef.current?.getBoundingClientRect());
+
+        // for touch screens we start a timer to detect hold for panning
+        if (e.pointerType === 'touch') {
+            touchStartPosRef.current = { x: e.clientX, y: e.clientY };
+            isTouchPanningRef.current = false;
+
+            // clear any existing timer first
+            if (touchHoldTimerRef.current) {
+                clearTimeout(touchHoldTimerRef.current);
+            }
+
+            // if they hold for 300ms we switch to pan mode
+            touchHoldTimerRef.current = setTimeout(() => {
+                if (touchStartPosRef.current) {
+                    isTouchPanningRef.current = true;
+                    handlePanStart(touchStartPosRef.current.x, touchStartPosRef.current.y);
+                    // stop any drawing that might have started
+                    setIsDrawing(false);
+                    lastPointRef.current = null;
+                    strokePointsRef.current = [];
+                }
+            }, 300);
+        }
 
         if (currentTool === 'text') {
             setTextPosition(point);
@@ -106,9 +134,30 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
         strokePointsRef.current = [[point.x, point.y]];
     }, [currentTool, setIsDrawing, setTextPosition, zoom, panX, panY, handlePanStart]);
 
-    // Pointer Move Handler
+    // handles finger or mouse movement
     const handlePointerMove = useCallback((e: React.PointerEvent) => {
-        // Handle panning
+        // check if we should be panning on touch
+        if (e.pointerType === 'touch' && touchStartPosRef.current) {
+            const moveThreshold = 10; // pixels of movement allowed before cancelling pan
+            const dx = e.clientX - touchStartPosRef.current.x;
+            const dy = e.clientY - touchStartPosRef.current.y;
+
+            // if they moved too much before the timer finished cancel pan mode
+            if (!isTouchPanningRef.current && (Math.abs(dx) > moveThreshold || Math.abs(dy) > moveThreshold)) {
+                if (touchHoldTimerRef.current) {
+                    clearTimeout(touchHoldTimerRef.current);
+                    touchHoldTimerRef.current = null;
+                }
+            }
+
+            // if we are in touch pan mode do the panning
+            if (isTouchPanningRef.current) {
+                handlePanMove(e.clientX, e.clientY, true); // force pan mode
+                return;
+            }
+        }
+
+        // middle mouse button panning for desktop users
         const isMiddleButtonPressed = !!(e.buttons & 4);
         if (handlePanMove(e.clientX, e.clientY, isMiddleButtonPressed)) {
             return;
@@ -117,7 +166,7 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
         const point = canvasService.normalizePoint(e.clientX, e.clientY, zoom, panX, panY, containerRef.current?.getBoundingClientRect());
         socketService.emit(SocketEvents.CURSOR_MOVE, { x: point.x, y: point.y, color });
 
-        // Shape/line preview
+        // show preview while drawing shapes or lines
         if ((currentTool === 'shapes' || currentTool === 'line') && isDrawing && shapeStartRef.current) {
             if (currentTool === 'line') {
                 drawLinePreview(shapeStartRef.current.x, shapeStartRef.current.y, point.x, point.y);
@@ -144,13 +193,29 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
         lastPointRef.current = point;
     }, [currentTool, isDrawing, color, strokeColor, strokeWidth, zoom, panX, panY, handlePanMove, drawShapePreview, drawLinePreview]);
 
-    // Wheel handler (zoom disabled)
-    const handleWheel = useCallback((e: React.WheelEvent) => {
-        e.preventDefault();
+    // wheel handler does nothing for now since zoom is disabled
+    const handleWheel = useCallback((_e: React.WheelEvent) => {
+        // zoom is disabled so this function is empty on purpose
     }, []);
 
-    // Pointer Up Handler
+    // handles when finger or mouse is lifted
     const handlePointerUp = useCallback((e: React.PointerEvent) => {
+        // clear the touch timer
+        if (touchHoldTimerRef.current) {
+            clearTimeout(touchHoldTimerRef.current);
+            touchHoldTimerRef.current = null;
+        }
+
+        // if we were panning on touch end it now
+        if (e.pointerType === 'touch' && isTouchPanningRef.current) {
+            isTouchPanningRef.current = false;
+            touchStartPosRef.current = null;
+            handlePanEnd();
+            return;
+        }
+
+        touchStartPosRef.current = null;
+
         if (isPanning && (e.button === 1 || e.button === 0)) {
             handlePanEnd();
             return;
@@ -158,7 +223,7 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
 
         const point = canvasService.normalizePoint(e.clientX, e.clientY, zoom, panX, panY, containerRef.current?.getBoundingClientRect());
 
-        // Line tool finalization
+        // finish drawing a line
         if (currentTool === 'line' && shapeStartRef.current) {
             clearOverlay();
             const colorIndex = COLORS.indexOf(strokeColor);
@@ -181,7 +246,7 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
             return;
         }
 
-        // Shape tool finalization
+        // finish drawing a shape
         if (currentTool === 'shapes' && shapeStartRef.current) {
             clearOverlay();
             const colorIndex = COLORS.indexOf(strokeColor);
@@ -206,7 +271,7 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
             return;
         }
 
-        // Stroke end for brush/eraser
+        // end of stroke for brush or eraser
         if (strokePointsRef.current.length > 1) {
             const colorIndex = COLORS.indexOf(strokeColor);
             socketService.emit('draw:stroke-end', {
@@ -223,7 +288,7 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
         strokePointsRef.current = [];
     }, [setIsDrawing, strokeColor, strokeWidth, currentTool, currentShape, clearOverlay, fillColor, isPanning, handlePanEnd, zoom, panX, panY]);
 
-    // Text Submit Handler
+    // handles submitting text to the canvas
     const handleTextSubmit = useCallback(() => {
         if (!textPosition || !textInput.trim()) return;
 
@@ -247,7 +312,7 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
         let x = textPosition.x;
         let y = textPosition.y;
 
-        // Smart positioning
+        // figure out where to put the text so it stays on screen
         const leftThreshold = padding + halfWidth;
         const rightThreshold = 1 - padding - halfWidth;
 

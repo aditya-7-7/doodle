@@ -1,13 +1,11 @@
-/**
- * Shared Types - Used by both Client and Server
- * Single source of truth for all shared type definitions
- */
+// shared types used by both client and server
+// single source of truth for all shared type definitions
 
 // ============================================
-// Socket Event Names
+// socket event names
 // ============================================
 export enum SocketEvents {
-    // Room Events
+    // room events
     ROOM_CREATE = 'room:create',
     ROOM_CREATED = 'room:created',
     ROOM_JOIN = 'room:join',
@@ -21,32 +19,32 @@ export enum SocketEvents {
     ROOM_SETTINGS_UPDATED = 'room:settings-updated',
     ROOM_ERROR = 'room:error',
 
-    // Draw Events
+    // draw events
     DRAW_STROKE = 'draw:stroke',
     DRAW_ERASE = 'draw:erase',
     DRAW_CLEAR = 'draw:clear',
     DRAW_SHAPE = 'draw:shape',
     DRAW_TEXT = 'draw:text',
 
-    // Cursor Events
+    // cursor events
     CURSOR_MOVE = 'cursor:move',
     CURSOR_UPDATE = 'cursor:update',
 
-    // History Events
+    // history events
     HISTORY_UNDO = 'history:undo',
     HISTORY_REDO = 'history:redo',
     HISTORY_UNDO_PERSONAL = 'history:undo-personal',
     HISTORY_REDO_PERSONAL = 'history:redo-personal',
     HISTORY_SYNC = 'history:sync',
 
-    // Canvas Events
+    // canvas events
     CANVAS_LOAD = 'canvas:load',
     CANVAS_SNAPSHOT = 'canvas:snapshot',
     CANVAS_SNAPSHOT_REQUEST = 'canvas:snapshot-request',
 }
 
 // ============================================
-// Room Types
+// room types
 // ============================================
 export interface RoomSettings {
     isPrivate: boolean;
@@ -83,7 +81,7 @@ export interface RoomMember {
 }
 
 // ============================================
-// Drawing Types
+// drawing types
 // ============================================
 export type ToolType = 'brush' | 'eraser' | 'line' | 'shapes' | 'text';
 export type ShapeType = 'rect' | 'circle' | 'triangle' | 'diamond' | 'line';
@@ -142,7 +140,7 @@ export interface CanvasSnapshot {
 }
 
 // ============================================
-// Cursor Type
+// cursor type
 // ============================================
 export interface UserCursor {
     sessionId: string;
@@ -153,7 +151,7 @@ export interface UserCursor {
 }
 
 // ============================================
-// Socket Payloads
+// socket payloads
 // ============================================
 export interface CreateRoomPayload {
     sessionId: string;
@@ -179,19 +177,19 @@ export interface CursorMovePayload {
 }
 
 // ============================================
-// Constants
+// constants
 // ============================================
 export const COLORS = [
-    '#000000', // Black
-    '#FF6B6B', // Red
-    '#4ECDC4', // Teal
-    '#45B7D1', // Blue
-    '#96CEB4', // Green
-    '#FFEAA7', // Yellow
-    '#DDA0DD', // Purple
-    '#FF69B4', // Pink
-    '#FFA500', // Orange
-    '#FFFFFF', // White
+    '#000000', // black
+    '#FF6B6B', // red
+    '#4ECDC4', // teal
+    '#45B7D1', // blue
+    '#96CEB4', // green
+    '#FFEAA7', // yellow
+    '#DDA0DD', // purple
+    '#FF69B4', // pink
+    '#FFA500', // orange
+    '#FFFFFF', // white
 ];
 
 export const STROKE_WIDTHS = [2, 4, 6, 8, 12, 16, 24];

@@ -11,7 +11,7 @@ const CanvasSnapshotSchema = new Schema<CanvasSnapshotDocument>({
     },
     imageData: {
         type: String,
-        required: true  // Base64 canvas.toDataURL()
+        required: true  // base64 canvas todataurl
     },
     sequenceNumber: {
         type: Number,
@@ -23,7 +23,7 @@ const CanvasSnapshotSchema = new Schema<CanvasSnapshotDocument>({
     },
 });
 
-// Index for getting latest snapshot
+// index for getting latest snapshot
 CanvasSnapshotSchema.index({ roomId: 1, createdAt: -1 });
 
 export const CanvasSnapshot = mongoose.model<CanvasSnapshotDocument>('CanvasSnapshot', CanvasSnapshotSchema);

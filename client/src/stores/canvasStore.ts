@@ -2,20 +2,20 @@ import { create } from 'zustand';
 import { ToolType, UserCursor, COLORS, STROKE_WIDTHS, ShapeType } from '../types';
 
 interface CanvasState {
-    // Tool settings
+    // tool settings
     currentTool: ToolType;
     currentShape: ShapeType;
     strokeColor: string;
     strokeWidth: number;
     fillColor: string | null;
 
-    // Canvas state
+    // canvas state
     isDrawing: boolean;
 
-    // Remote cursors
+    // remote cursors
     remoteCursors: Map<string, UserCursor>;
 
-    // Actions
+    // actions
     setCurrentTool: (tool: ToolType) => void;
     setCurrentShape: (shape: ShapeType) => void;
     setStrokeColor: (color: string) => void;

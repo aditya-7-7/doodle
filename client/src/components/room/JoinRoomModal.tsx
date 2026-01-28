@@ -13,7 +13,7 @@ interface JoinRoomModalProps {
     onSubmit: (e: React.FormEvent) => void;
 }
 
-// Memoized gradient input - same as RoomForm
+// memoized gradient input same as roomform
 const GradientInput = memo<React.InputHTMLAttributes<HTMLInputElement>>(props => (
     <div className="room-form-input-wrapper">
         <div className="room-form-input-glow animated-gradient-fast" />

@@ -14,10 +14,8 @@ interface PrivacyPopoverProps {
     onClose: () => void;
 }
 
-/**
- * Privacy Popover Component
- * Extracted from RoomHeader - manages room privacy settings
- */
+// privacy popover component
+// extracted from RoomHeader (manages room privacy settings)
 export function PrivacyPopover({ show, isPrivate, password, isAdmin, onClose }: PrivacyPopoverProps) {
     const [showPasswordText, setShowPasswordText] = useState(false);
     const [newPassword, setNewPassword] = useState('');
@@ -27,11 +25,11 @@ export function PrivacyPopover({ show, isPrivate, password, isAdmin, onClose }: 
 
     const handleTogglePrivacy = () => {
         if (isPrivate) {
-            // Making public - just toggle
+            // making public just toggle
             socketService.emit(SocketEvents.ROOM_UPDATE_PRIVACY, { isPrivate: false });
             onClose();
         } else {
-            // Making private - need password
+            // making private need password
             if (!newPassword.trim()) {
                 alert('Please enter a password to make the room private');
                 return;

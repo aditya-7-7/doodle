@@ -21,7 +21,7 @@ class WebSocketService {
         this.io = new Server(server, {
             transports: ['websocket', 'polling'],
             cors: {
-                origin: [clientUrl, 'http://localhost:5173'],  // Vite dev server
+                origin: [clientUrl, 'http://localhost:5173'],  // vite dev server
                 methods: ['GET', 'POST'],
                 credentials: true,
             },
@@ -38,22 +38,22 @@ class WebSocketService {
         return this.io;
     }
 
-    // Send to specific socket
+    // send to specific socket
     public sendToSocket(socketId: string, event: SocketEvents, data: any): void {
         this.io?.to(socketId).emit(event, data);
     }
 
-    // Send to all sockets in a room
+    // send to all sockets in a room
     public sendToRoom(roomCode: string, event: SocketEvents, data: any): void {
         this.io?.to(roomCode).emit(event, data);
     }
 
-    // Send to all sockets in room except sender
+    // send to all sockets in room except sender
     public sendToRoomExcept(socket: Socket, roomCode: string, event: SocketEvents, data: any): void {
         socket.to(roomCode).emit(event, data);
     }
 
-    // Broadcast to all connected sockets
+    // broadcast to all connected sockets
     public broadcast(socket: Socket, event: SocketEvents, data: any): void {
         socket.broadcast.emit(event, data);
     }

@@ -17,10 +17,10 @@ interface ButtonProps {
     gradient?: 'indigo' | 'green' | 'none';
 }
 
-/**
- * Reusable Button Component
- * Used throughout RoomHeader, Toolbar, CanvasArea
- */
+
+// reusable button component
+// used in roomheader, toolbar, canvasarea
+
 export function Button({
     children,
     onClick,
@@ -46,7 +46,7 @@ export function Button({
         opacity: disabled ? 0.5 : 1,
     };
 
-    // Size variants
+    // size variants
     let sizeStyles: CSSProperties = {};
     switch (size) {
         case 'sm':
@@ -72,7 +72,7 @@ export function Button({
             break;
     }
 
-    // Variant styles
+    // variant styles
     let variantStyles: CSSProperties = {};
     let boxShadow = 'none';
     let hoverShadow = 'none';
@@ -134,7 +134,7 @@ export function Button({
         ...style,
     };
 
-    // Update shadow on hover for primary variant
+    // update shadow on hover for primary variant
     if (hoverStyles.transform && variant === 'primary') {
         combinedStyles.boxShadow = hoverShadow;
     }

@@ -14,36 +14,36 @@ import {
     registerHistoryHandlers,
 } from './handlers';
 
-// Load environment variables
+// load environment variables
 dotenv.config();
 
 const PORT = process.env.PORT || 4000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
-// Rate limiting configuration
+// rate limiting configuration
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 100, // limit each ip to 100 requests per windowms
     message: { error: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
 
 async function bootstrap() {
-    // Create Express app
+    // create express app
     const app = express();
 
-    // Apply rate limiting to all routes
+    // apply rate limiting to all routes
     app.use(apiLimiter);
 
-    // Middleware
+    // middleware
     app.use(cors({
         origin: [CLIENT_URL, 'http://localhost:5173'],
         credentials: true,
     }));
     app.use(express.json());
 
-    // Health check endpoint
+    // health check endpoint
     app.get('/', (req, res) => {
         res.json({
             status: 'ok',
@@ -56,26 +56,26 @@ async function bootstrap() {
         res.json({ status: 'healthy' });
     });
 
-    // Create HTTP server
+    // create http server
     const httpServer = createServer(app);
 
-    // Connect to MongoDB
+    // connect to mongodb
     await connectDatabase();
 
-    // Initialize WebSocket server
+    // initialize websocket server
     const io = webSocketService.init(httpServer);
 
-    // Handle socket connections
+    // handle socket connections
     io.on('connection', (socket: ExtendedSocket) => {
-        console.log(`🔌 Client connected: ${socket.id}`);
+        console.log(`✅ Client connected: ${socket.id}`);
 
-        // Register all handlers
+        // register all handlers
         registerRoomHandlers(socket);
         registerDrawHandlers(socket);
         registerCursorHandlers(socket);
         registerHistoryHandlers(socket);
 
-        // Ping handler for latency measurement
+        // ping handler for latency measurement
         socket.on('ping', (data: any, callback: Function) => {
             if (typeof callback === 'function') {
                 callback();
@@ -83,21 +83,13 @@ async function bootstrap() {
         });
 
         socket.on('disconnect', () => {
-            console.log(`🔌 Client disconnected: ${socket.id}`);
+            console.log(`⚠️ Client disconnected: ${socket.id}`);
         });
     });
 
-    // Start server
+    // start server
     httpServer.listen(PORT, () => {
-        console.log(`
-╔═══════════════════════════════════════════════════════════╗
-║     🎨 Collaborative Canvas Server                        ║
-╠═══════════════════════════════════════════════════════════╣
-║  🚀 Server running on http://localhost:${PORT}              ║
-║  🔌 WebSocket ready for connections                       ║
-║  📦 MongoDB connected                                      ║
-╚═══════════════════════════════════════════════════════════╝
-    `);
+        console.log(`🌐 Server running on http://localhost:${PORT}`);
     });
 }
 
