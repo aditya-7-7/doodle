@@ -84,7 +84,7 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
     );
 
     return (
-        <aside className="w-14 md:w-12 bg-white border-r border-gray-200 flex flex-col items-center py-2 gap-2 md:gap-1.5 landscape:max-h-[calc(100vh-3rem)] landscape:overflow-y-auto landscape:overflow-x-hidden">
+        <aside className="w-14 md:w-12 bg-white border-r border-gray-200 flex flex-col items-center py-2 gap-2 md:gap-1.5 max-h-[calc(100vh-4rem)] md:max-h-screen overflow-y-auto overflow-x-hidden">
             {/* Drawing Tools */}
             <ToolButton active={currentTool === 'brush'} onClick={() => setCurrentTool('brush')} title="Brush">
                 <Pencil className="w-5 h-5 md:w-4 md:h-4" />

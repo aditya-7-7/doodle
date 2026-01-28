@@ -14,6 +14,9 @@ interface CanvasAreaProps {
     onPointerMove: (e: React.PointerEvent) => void;
     onPointerUp: (e: React.PointerEvent) => void;
     onWheel: (e: React.WheelEvent) => void;
+    onTouchStart: (e: React.TouchEvent) => void;
+    onTouchMove: (e: React.TouchEvent) => void;
+    onTouchEnd: (e: React.TouchEvent) => void;
     textPosition: { x: number; y: number } | null;
     textInput: string;
     setTextInput: (text: string) => void;
@@ -55,6 +58,9 @@ export function CanvasArea({
     onPointerMove,
     onPointerUp,
     onWheel,
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd,
     textPosition,
     textInput,
     setTextInput,
@@ -86,6 +92,9 @@ export function CanvasArea({
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
                 onWheel={onWheel}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
             />
             <canvas
                 ref={overlayCanvasRef}

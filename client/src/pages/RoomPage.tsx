@@ -14,7 +14,7 @@ export default function RoomPage() {
 
     // custom hooks for socket and drawing logic
     const { isConnected, fps, latency, showJoinForm, joinName, setJoinName, joinPassword, setJoinPassword, joinError, handleJoinSubmit } = useRoomSocket(roomCode);
-    const { canvasRef, overlayCanvasRef, containerRef, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel, textPosition, setTextPosition, textInput, setTextInput, handleTextSubmit, fillColor, setFillColor, fontSize, setFontSize, isPanning } = useCanvasDrawing();
+    const { canvasRef, overlayCanvasRef, containerRef, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd, textPosition, setTextPosition, textInput, setTextInput, handleTextSubmit, fillColor, setFillColor, fontSize, setFontSize, isPanning } = useCanvasDrawing();
 
     // get current users admin status
     const currentMember = members.find(m => m.sessionId === sessionId);
@@ -107,6 +107,9 @@ export default function RoomPage() {
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
                     onWheel={handleWheel}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                     textPosition={textPosition}
                     textInput={textInput}
                     setTextInput={setTextInput}

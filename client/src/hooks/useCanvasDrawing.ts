@@ -14,6 +14,9 @@ interface UseCanvasDrawingReturn {
     handlePointerMove: (e: React.PointerEvent) => void;
     handlePointerUp: (e: React.PointerEvent) => void;
     handleWheel: (e: React.WheelEvent) => void;
+    handleTouchStart: (e: React.TouchEvent) => void;
+    handleTouchMove: (e: React.TouchEvent) => void;
+    handleTouchEnd: (e: React.TouchEvent) => void;
     textPosition: { x: number; y: number } | null;
     setTextPosition: (pos: { x: number; y: number } | null) => void;
     textInput: string;
@@ -34,10 +37,12 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
     const shapeStartRef = useRef<{ x: number; y: number } | null>(null);
     const strokePointsRef = useRef<number[][]>([]);
 
-    // refs for touch based panning
-    const touchHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
-    const isTouchPanningRef = useRef(false);
+    // refs for multi touch handling
+    const activeTouchIdRef = useRef<number | null>(null); // track primary touch for drawing
+    const touchesRef = useRef<Map<number, { x: number, y: number }>>(new Map());
+    const initialPinchDistanceRef = useRef<number>(0);
+    const initialZoomRef = useRef<number>(1);
+    const lastTwoFingerMidpointRef = useRef<{ x: number, y: number } | null>(null);
 
     // callback ref for canvas element
     const canvasRef = useCallback((node: HTMLCanvasElement | null) => {
@@ -93,27 +98,14 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
 
         const point = canvasService.normalizePoint(e.clientX, e.clientY, zoom, panX, panY, containerRef.current?.getBoundingClientRect());
 
-        // for touch screens we start a timer to detect hold for panning
+        // for touch handle only single touch for drawing
         if (e.pointerType === 'touch') {
-            touchStartPosRef.current = { x: e.clientX, y: e.clientY };
-            isTouchPanningRef.current = false;
-
-            // clear any existing timer first
-            if (touchHoldTimerRef.current) {
-                clearTimeout(touchHoldTimerRef.current);
+            // ignore if already have a primary touch active
+            if (activeTouchIdRef.current !== null && activeTouchIdRef.current !== e.pointerId) {
+                return;
             }
-
-            // if they hold for 300ms we switch to pan mode
-            touchHoldTimerRef.current = setTimeout(() => {
-                if (touchStartPosRef.current) {
-                    isTouchPanningRef.current = true;
-                    handlePanStart(touchStartPosRef.current.x, touchStartPosRef.current.y);
-                    // stop any drawing that might have started
-                    setIsDrawing(false);
-                    lastPointRef.current = null;
-                    strokePointsRef.current = [];
-                }
-            }, 300);
+            // set this as the active touch point
+            activeTouchIdRef.current = e.pointerId;
         }
 
         if (currentTool === 'text') {
@@ -136,25 +128,9 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
 
     // handles finger or mouse movement
     const handlePointerMove = useCallback((e: React.PointerEvent) => {
-        // check if we should be panning on touch
-        if (e.pointerType === 'touch' && touchStartPosRef.current) {
-            const moveThreshold = 10; // pixels of movement allowed before cancelling pan
-            const dx = e.clientX - touchStartPosRef.current.x;
-            const dy = e.clientY - touchStartPosRef.current.y;
-
-            // if they moved too much before the timer finished cancel pan mode
-            if (!isTouchPanningRef.current && (Math.abs(dx) > moveThreshold || Math.abs(dy) > moveThreshold)) {
-                if (touchHoldTimerRef.current) {
-                    clearTimeout(touchHoldTimerRef.current);
-                    touchHoldTimerRef.current = null;
-                }
-            }
-
-            // if we are in touch pan mode do the panning
-            if (isTouchPanningRef.current) {
-                handlePanMove(e.clientX, e.clientY, true); // force pan mode
-                return;
-            }
+        // ignore touch move if not the active touch
+        if (e.pointerType === 'touch' && activeTouchIdRef.current !== e.pointerId) {
+            return;
         }
 
         // middle mouse button panning for desktop users
@@ -200,21 +176,10 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
 
     // handles when finger or mouse is lifted
     const handlePointerUp = useCallback((e: React.PointerEvent) => {
-        // clear the touch timer
-        if (touchHoldTimerRef.current) {
-            clearTimeout(touchHoldTimerRef.current);
-            touchHoldTimerRef.current = null;
+        // clear active touch if this was the primary touch
+        if (e.pointerType === 'touch' && activeTouchIdRef.current === e.pointerId) {
+            activeTouchIdRef.current = null;
         }
-
-        // if we were panning on touch end it now
-        if (e.pointerType === 'touch' && isTouchPanningRef.current) {
-            isTouchPanningRef.current = false;
-            touchStartPosRef.current = null;
-            handlePanEnd();
-            return;
-        }
-
-        touchStartPosRef.current = null;
 
         if (isPanning && (e.button === 1 || e.button === 0)) {
             handlePanEnd();
@@ -343,9 +308,114 @@ export function useCanvasDrawing(): UseCanvasDrawingReturn {
         setTextPosition(null);
     }, [strokeColor, textInput, textPosition, fontSize, setTextInput, setTextPosition]);
 
+    // calculate distance between two touch points
+    const getTouchDistance = useCallback((touch1: { x: number, y: number }, touch2: { x: number, y: number }) => {
+        const dx = touch2.x - touch1.x;
+        const dy = touch2.y - touch1.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }, []);
+
+    // calculate midpoint between two touches
+    const getTouchMidpoint = useCallback((touch1: { x: number, y: number }, touch2: { x: number, y: number }) => {
+        return {
+            x: (touch1.x + touch2.x) / 2,
+            y: (touch1.y + touch2.y) / 2
+        };
+    }, []);
+
+    // handle two finger touch start
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        const newTouches = new Map(touchesRef.current);
+
+        for (let i = 0; i < e.touches.length; i++) {
+            const touch = e.touches[i];
+            newTouches.set(touch.identifier, { x: touch.clientX, y: touch.clientY });
+        }
+
+        touchesRef.current = newTouches;
+
+        // if two or more fingers start two finger mode
+        if (newTouches.size >= 2) {
+            const touches = Array.from(newTouches.values());
+            const distance = getTouchDistance(touches[0], touches[1]);
+            const midpoint = getTouchMidpoint(touches[0], touches[1]);
+
+            initialPinchDistanceRef.current = distance;
+            initialZoomRef.current = zoom;
+            lastTwoFingerMidpointRef.current = midpoint;
+
+            // cancel any active drawing
+            setIsDrawing(false);
+            lastPointRef.current = null;
+            strokePointsRef.current = [];
+            activeTouchIdRef.current = null;
+        }
+    }, [zoom, getTouchDistance, getTouchMidpoint, setIsDrawing]);
+
+    // handle two finger touch move
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+        const newTouches = new Map(touchesRef.current);
+
+        for (let i = 0; i < e.touches.length; i++) {
+            const touch = e.touches[i];
+            if (newTouches.has(touch.identifier)) {
+                newTouches.set(touch.identifier, { x: touch.clientX, y: touch.clientY });
+            }
+        }
+
+        touchesRef.current = newTouches;
+
+        // two finger gestures for pan (zoom is disabled)
+        if (newTouches.size >= 2) {
+            e.preventDefault();
+
+            const touches = Array.from(newTouches.values());
+            const currentMidpoint = getTouchMidpoint(touches[0], touches[1]);
+
+
+            // calculate pan from midpoint movement
+            if (lastTwoFingerMidpointRef.current) {
+                const dx = currentMidpoint.x - lastTwoFingerMidpointRef.current.x;
+                const dy = currentMidpoint.y - lastTwoFingerMidpointRef.current.y;
+
+                if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+                    setPan(panX + dx, panY + dy);
+                    lastTwoFingerMidpointRef.current = currentMidpoint;
+                }
+            }
+        }
+    }, [panX, panY, setPan, getTouchMidpoint]);
+
+    // handle two finger touch end
+    const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+        const newTouches = new Map(touchesRef.current);
+
+        // remove ended touches
+        const remainingIds = new Set<number>();
+        for (let i = 0; i < e.touches.length; i++) {
+            remainingIds.add(e.touches[i].identifier);
+        }
+
+        for (const id of newTouches.keys()) {
+            if (!remainingIds.has(id)) {
+                newTouches.delete(id);
+            }
+        }
+
+        touchesRef.current = newTouches;
+
+        // reset two finger mode when fingers lift
+        if (newTouches.size < 2) {
+            initialPinchDistanceRef.current = 0;
+            initialZoomRef.current = 1;
+            lastTwoFingerMidpointRef.current = null;
+        }
+    }, []);
+
     return {
         canvasRef, overlayCanvasRef, containerRef,
         handlePointerDown, handlePointerMove, handlePointerUp, handleWheel,
+        handleTouchStart, handleTouchMove, handleTouchEnd,
         textPosition, setTextPosition, textInput, setTextInput, handleTextSubmit,
         fillColor, setFillColor, fontSize, setFontSize,
         isPanning,
