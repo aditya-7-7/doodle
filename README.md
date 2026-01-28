@@ -4,6 +4,9 @@ Real-time collaborative drawing canvas application built with React, Node.js, an
 
 ![Doodle Demo](client/public/logo.png)
 
+## Live Link
+https://doodle-client-nu.vercel.app/
+
 ## Features
 
 - 🎨 **Drawing Tools**: Brush, eraser, shapes (rectangle, circle, triangle, diamond), text
@@ -39,7 +42,7 @@ Real-time collaborative drawing canvas application built with React, Node.js, an
 │                   └─────────────┘  └─────────────┘  └─────────────────────┘ │
 │  ┌─────────────────────────────────────────────────────────────────────────┐│
 │  │                         Zustand Stores                                  ││
-│  │   roomStore (room state)  │  canvasStore (tool state)  │  userStore    ││
+│  │   roomStore (room state)  │  canvasStore (tool state)  │  userStore     ││
 │  └─────────────────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
@@ -51,11 +54,11 @@ Real-time collaborative drawing canvas application built with React, Node.js, an
 │  │                         WebSocketService                                ││
 │  │   Manages Socket.io connections, CORS, event routing                    ││
 │  └─────────────────────────────────────────────────────────────────────────┘│
-│  ┌─────────────────────────┐  ┌─────────────────────────────────────────────┐│
+│  ┌─────────────────────────┐  ┌────────────────────────────────────────────┐│
 │  │       Handlers          │  │                Services                    ││
 │  │  roomHandler            │  │  RoomService (room CRUD, auth)             ││
 │  │  drawHandler            │  │  DrawService (operations, history)         ││
-│  │  cursorHandler          │  └─────────────────────────────────────────────┘│
+│  │  cursorHandler          │  └────────────────────────────────────────────┘│
 │  │  historyHandler         │                                                │
 │  └─────────────────────────┘                                                │
 │  ┌─────────────────────────────────────────────────────────────────────────┐│
@@ -83,7 +86,7 @@ User draws on canvas
         │
         ▼
 ┌─────────────────┐     emit('draw')      ┌─────────────────┐
-│  useCanvasDraw  │ ───────────────────▶  │   drawHandler   │
+│  useCanvasDraw  │ ───────────────────▶  │   drawHandler  │
 │  (client hook)  │                       │   (server)      │
 └─────────────────┘                       └─────────────────┘
         │                                         │
