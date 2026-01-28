@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Pencil, Eraser, Square, Minus, Type, Undo2, Redo2, Trash2, Plus, Globe, User } from 'lucide-react';
 import { useCanvasStore } from '../../stores';
 import { COLORS } from '../../types';
@@ -18,14 +18,23 @@ interface ToolbarProps {
     setFontSize: (size: number) => void;
 }
 
-// floating popover with position option
-const Popover = ({ show, onClose, children, position = 'top' }: { show: boolean; onClose: () => void; children: React.ReactNode; position?: 'top' | 'bottom' }) => {
+// Popover with dynamic positioning - receives top position as CSS variable
+interface PopoverProps {
+    show: boolean;
+    onClose: () => void;
+    children: React.ReactNode;
+    topPosition: number;
+}
+
+const Popover = ({ show, onClose, children, topPosition }: PopoverProps) => {
     if (!show) return null;
-    const positionClass = position === 'bottom' ? 'bottom-0' : 'top-0';
     return (
         <>
             <div className="fixed inset-0 z-40" onClick={onClose} />
-            <div className={`absolute left-full ml-3 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50 min-w-[200px] ${positionClass}`}>
+            <div
+                className="fixed left-14 md:left-12 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50 min-w-[200px] -translate-y-1/2"
+                style={{ top: topPosition }}
+            >
                 {children}
             </div>
         </>
@@ -37,7 +46,7 @@ const Divider = () => <hr className="w-[70%] h-0 border-0 border-t border-gray-2
 
 // tool button component
 const ToolButton = ({ children, active, onClick, title, variant = 'default' }: {
-    children: React.ReactNode; active?: boolean; onClick: () => void; title: string; variant?: 'default' | 'indigo' | 'red';
+    children: React.ReactNode; active?: boolean; onClick: (e: React.MouseEvent) => void; title: string; variant?: 'default' | 'indigo' | 'red';
 }) => {
     const baseClasses = "w-9 h-9 min-w-9 min-h-9 md:w-[30px] md:h-[30px] md:min-w-[30px] md:min-h-[30px] rounded-md flex items-center justify-center border-none cursor-pointer transition-colors shrink-0";
 
@@ -72,9 +81,25 @@ const ColorButton = ({ color, selected, onClick }: { color: string; selected: bo
 export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClear, fillColor, setFillColor, fontSize, setFontSize }: ToolbarProps) {
     const { currentTool, currentShape, strokeColor, strokeWidth, setCurrentTool, setCurrentShape, setStrokeColor, setStrokeWidth } = useCanvasStore();
     const [activePopover, setActivePopover] = useState<string | null>(null);
+    const [popoverPosition, setPopoverPosition] = useState<number>(0);
 
-    const togglePopover = (name: string) => setActivePopover(activePopover === name ? null : name);
-    const closePopover = () => setActivePopover(null);
+    // Toggle popover and calculate position based on clicked element
+    const togglePopover = useCallback((name: string, event: React.MouseEvent) => {
+        if (activePopover === name) {
+            setActivePopover(null);
+        } else {
+            // Get the button's vertical center position
+            const button = event.currentTarget as HTMLElement;
+            const rect = button.getBoundingClientRect();
+            const buttonCenter = rect.top + rect.height / 2;
+            setPopoverPosition(buttonCenter);
+            setActivePopover(name);
+        }
+    }, [activePopover]);
+
+    const closePopover = useCallback(() => {
+        setActivePopover(null);
+    }, []);
 
     const UndoRedoIcon = ({ icon: Icon, indicator: Indicator, color }: { icon: typeof Undo2; indicator: typeof User | typeof Globe; color?: string }) => (
         <div className="relative flex items-center justify-center">
@@ -84,7 +109,7 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
     );
 
     return (
-        <aside className="w-14 md:w-12 bg-white border-r border-gray-200 flex flex-col items-center py-2 gap-2 md:gap-1.5 max-h-[calc(100vh-4rem)] md:max-h-screen overflow-y-auto overflow-x-hidden">
+        <aside className="w-14 md:w-12 bg-white border-r border-gray-200 flex flex-col items-center py-2 gap-2 md:gap-1.5 max-h-[calc(100vh-4rem)] md:max-h-screen overflow-y-auto overflow-x-visible">
             {/* Drawing Tools */}
             <ToolButton active={currentTool === 'brush'} onClick={() => setCurrentTool('brush')} title="Brush">
                 <Pencil className="w-5 h-5 md:w-4 md:h-4" />
@@ -97,11 +122,11 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
             </ToolButton>
 
             {/* Shapes */}
-            <div className="relative">
-                <ToolButton active={currentTool === 'shapes'} onClick={() => { setCurrentTool('shapes'); togglePopover('shapes'); }} title="Shapes">
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <ToolButton active={currentTool === 'shapes'} onClick={(e) => { setCurrentTool('shapes'); togglePopover('shapes', e); }} title="Shapes">
                     <Square className="w-5 h-5 md:w-4 md:h-4" />
                 </ToolButton>
-                <Popover show={activePopover === 'shapes'} onClose={closePopover}>
+                <Popover show={activePopover === 'shapes'} onClose={closePopover} topPosition={popoverPosition}>
                     <ShapeSettingsContent
                         currentShape={currentShape}
                         setCurrentShape={setCurrentShape}
@@ -112,11 +137,11 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
             </div>
 
             {/* Text */}
-            <div className="relative">
-                <ToolButton active={currentTool === 'text'} onClick={() => { setCurrentTool('text'); togglePopover('text'); }} title="Text">
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <ToolButton active={currentTool === 'text'} onClick={(e) => { setCurrentTool('text'); togglePopover('text', e); }} title="Text">
                     <Type className="w-5 h-5 md:w-4 md:h-4" />
                 </ToolButton>
-                <Popover show={activePopover === 'text'} onClose={closePopover}>
+                <Popover show={activePopover === 'text'} onClose={closePopover} topPosition={popoverPosition}>
                     <TextSettingsContent fontSize={fontSize} setFontSize={setFontSize} />
                 </Popover>
             </div>
@@ -151,9 +176,9 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
             <Divider />
 
             {/* Stroke Size */}
-            <div className="relative flex flex-col items-center gap-0.5">
+            <div className="relative flex flex-col items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
                 <button
-                    onClick={() => togglePopover('stroke')}
+                    onClick={(e) => togglePopover('stroke', e)}
                     className="w-8 h-8 min-w-8 min-h-8 md:w-[26px] md:h-[26px] md:min-w-[26px] md:min-h-[26px] rounded-full border border-gray-300 bg-white cursor-pointer flex items-center justify-center"
                     title={`Stroke: ${strokeWidth}px`}
                 >
@@ -163,7 +188,7 @@ export function Toolbar({ onUndo, onRedo, onUndoPersonal, onRedoPersonal, onClea
                     />
                 </button>
                 <span className="text-[9px] text-gray-500">{strokeWidth}px</span>
-                <Popover show={activePopover === 'stroke'} onClose={closePopover}>
+                <Popover show={activePopover === 'stroke'} onClose={closePopover} topPosition={popoverPosition}>
                     <BrushSettingsContent strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth} />
                 </Popover>
             </div>
